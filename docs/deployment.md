@@ -98,6 +98,20 @@ aws ssm start-session --target $INSTANCE_ID --region us-west-2 --document-name A
 - [ ] Test VNC: `vncviewer <public-ip>:5900`
 - [ ] Enter VNC password when prompted
 
+## Terraform Structure
+
+The infrastructure uses modular design:
+
+- **modules/networking/** - VPC, subnets, security groups
+- **modules/iam/** - IAM roles and instance profiles
+- **modules/ec2/** - EC2 instance, dedicated host, elastic IP
+- **main.tf** - Module instantiation and orchestration
+- **variables.tf** - Root-level input variables
+- **outputs.tf** - Instance ID, public IP, connection info
+- **backend.tf** - S3 state backend with native locking
+
+See [docs/terraform.md](../terraform.md) for more details on the setup.
+
 ## Troubleshooting During Deployment
 
 | Issue | Solution |
@@ -106,6 +120,9 @@ aws ssm start-session --target $INSTANCE_ID --region us-west-2 --document-name A
 | "ResourceNotAvailable" | Mac instances not available in region (try us-west-2) |
 | "Service role not found" | Wait 30 seconds for IAM propagation |
 | "terraform init fails" | Run `aws configure` and verify credentials |
+| "Module not found" | Run `terraform init` to download modules |
+| "InvalidAMIID.NotFound" | Mac AMI not available in region; use us-west-2 |
+| "InsufficientCapacity" | Dedicated Hosts unavailable; retry in 1-2 hours |
 
 ## Cost Management
 
