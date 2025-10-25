@@ -1,11 +1,9 @@
-# AWS Configuration
 variable "aws_region" {
   description = "AWS region for resources"
   type        = string
   default     = "us-west-2"
 }
 
-# Instance Configuration
 variable "instance_name" {
   description = "Name tag for the EC2 Mac instance"
   type        = string
@@ -18,7 +16,6 @@ variable "instance_type" {
   default     = "mac2.metal"
 }
 
-# Network Configuration
 variable "vpc_cidr" {
   description = "CIDR block for VPC"
   type        = string
@@ -31,7 +28,6 @@ variable "subnet_cidr" {
   default     = "10.0.1.0/24"
 }
 
-# VNC Configuration
 variable "allowed_vnc_cidr" {
   description = "CIDR blocks allowed for VNC access"
   type        = string
@@ -51,7 +47,22 @@ variable "vnc_password" {
   default     = "AtlasRedTeam123!" # Change this!
 }
 
-# Storage Configuration
+variable "min_host_allocation_days" {
+  description = "Minimum days to allocate Dedicated Host (AWS requirement: 1 day minimum)"
+  type        = number
+  default     = 1
+}
+
+variable "tags" {
+  description = "Common tags for all resources"
+  type        = map(string)
+  default = {
+    Project     = "AtlasRedTeaming"
+    Environment = "testing"
+    ManagedBy   = "Terraform"
+  }
+}
+
 variable "root_volume_size" {
   description = "Size of the root volume in GB"
   type        = number
@@ -62,15 +73,4 @@ variable "root_volume_type" {
   description = "Type of the root volume"
   type        = string
   default     = "gp3"
-}
-
-# Resource Tags
-variable "tags" {
-  description = "Common tags for all resources"
-  type        = map(string)
-  default = {
-    Project     = "AtlasRedTeaming"
-    Environment = "testing"
-    ManagedBy   = "Terraform"
-  }
 }

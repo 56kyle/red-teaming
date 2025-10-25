@@ -3,32 +3,28 @@
 *.tfstate.*
 .terraform/
 .terraform.lock.hcl
-crash.log
-override.tf
-override.tf.json
-*_override.tf
-*_override.tf.json
+.tfplan
+tfplan.txt
 
-# IDEs
+# IDE and editor files
 .idea/
 *.swp
 *.swo
-*~
 .DS_Store
+.vscode/
+*.iml
 
-# Environment-specific values (if not using terraform.tfvars)
-*.auto.tfvars
-terraform.tfvars.json
+# OS files
+Thumbs.db
 
-# Logs
-*.log
+# Local overrides
+*.tfvars
+!terraform.tfvars.example
 
-# Temporary files
-temp/
-tmp/
-*.tmp
+# Sensitive files
+.env
+secrets.txt
+credentials.json
 
-# SSH keys
-*.pem
-*.pub
-!terraform/.gitkeep
+# Build artifacts
+*.zip
