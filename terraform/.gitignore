@@ -1,0 +1,30 @@
+# Terraform files
+*.tfstate
+*.tfstate.*
+.terraform/
+.terraform.lock.hcl
+.tfplan
+tfplan.txt
+
+# IDE and editor files
+.idea/
+*.swp
+*.swo
+.DS_Store
+.vscode/
+*.iml
+
+# OS files
+Thumbs.db
+
+# Local overrides
+*.tfvars
+!terraform.tfvars.example
+
+# Sensitive files
+.env
+secrets.txt
+credentials.json
+
+# Build artifacts
+*.zip
