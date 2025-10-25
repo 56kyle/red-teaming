@@ -2,7 +2,7 @@ terraform {
   backend "s3" {
     bucket                      = "atlas-mac-terraform" # Change this to your bucket name
     key                         = "mac-instance/terraform.tfstate"
-    region                      = "us-east-2"
+    region                      = "us-east-2" # S3 bucket created in us-east-2 due to GUI setup constraints
     encrypt                     = true
     use_lockfile                = true # Native S3 locking (Terraform 1.10.0+)
     skip_credentials_validation = false

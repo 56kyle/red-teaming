@@ -29,22 +29,22 @@ variable "subnet_cidr" {
 }
 
 variable "allowed_vnc_cidr" {
-  description = "CIDR blocks allowed for VNC access"
+  description = "CIDR blocks allowed for VNC access (required if enable_vnc is true; set via TF_VAR_allowed_vnc_cidr)"
   type        = string
-  default     = "0.0.0.0/0" # Change this to your IP or range for security
+  default     = null
 }
 
 variable "enable_vnc" {
-  description = "Enable VNC server on the Mac instance"
+  description = "Enable VNC server on the Mac instance (Session Manager is the primary secure access method)"
   type        = bool
-  default     = true
+  default     = false
 }
 
 variable "vnc_password" {
-  description = "Password for VNC access (set in terraform.tfvars)"
+  description = "Password for VNC access (set via TF_VAR_vnc_password env var if enable_vnc is true)"
   type        = string
   sensitive   = true
-  default     = "AtlasRedTeam123!" # Change this!
+  default     = null
 }
 
 variable "min_host_allocation_days" {
@@ -64,9 +64,9 @@ variable "tags" {
 }
 
 variable "root_volume_size" {
-  description = "Size of the root volume in GB"
+  description = "Size of the root volume in GB (100GB sufficient for Atlas + Playwright + typical tooling)"
   type        = number
-  default     = 250
+  default     = 100
 }
 
 variable "root_volume_type" {
