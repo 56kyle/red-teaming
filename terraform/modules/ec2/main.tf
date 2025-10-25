@@ -21,13 +21,9 @@ data "aws_ami" "mac2" {
 
 # Dedicated Host for Mac instance (required for Mac instances)
 resource "aws_ec2_host" "mac_host" {
-  availability_zone      = data.aws_availability_zones.available.names[0]
-  auto_placement         = "off"
-  host_family            = "mac"
-  instance_family        = "mac2"
-  instance_type          = var.instance_type
-  availability_zone_id   = data.aws_availability_zones.available.zone_ids[0]
-  auto_placement_enabled = false
+  availability_zone = data.aws_availability_zones.available.names[0]
+  auto_placement    = "off"
+  instance_family   = "mac2"
 
   tags = merge(
     var.tags,

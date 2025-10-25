@@ -48,6 +48,7 @@ output "vnc_connection" {
     password = var.vnc_password
     command  = "vncviewer -passwd <(echo '${var.vnc_password}' | vncpasswd -f) ${module.ec2.instance_public_ip}:5900"
   } : null
+  sensitive = true
 }
 
 # Network Outputs

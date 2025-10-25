@@ -9,4 +9,3 @@ terraform {
     skip_metadata_api_check     = false
   }
 }
-

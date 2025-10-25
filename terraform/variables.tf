@@ -64,6 +64,13 @@ variable "root_volume_type" {
   default     = "gp3"
 }
 
+# Dedicated Host Configuration
+variable "min_host_allocation_days" {
+  description = "Minimum number of days to allocate the Dedicated Host"
+  type        = number
+  default     = 1
+}
+
 # Resource Tags
 variable "tags" {
   description = "Common tags for all resources"
