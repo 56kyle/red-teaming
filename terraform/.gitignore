@@ -1,0 +1,34 @@
+# Terraform files
+*.tfstate
+*.tfstate.*
+.terraform/
+.terraform.lock.hcl
+crash.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# IDEs
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Environment-specific values (if not using terraform.tfvars)
+*.auto.tfvars
+terraform.tfvars.json
+
+# Logs
+*.log
+
+# Temporary files
+temp/
+tmp/
+*.tmp
+
+# SSH keys
+*.pem
+*.pub
+!terraform/.gitkeep
