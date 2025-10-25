@@ -103,4 +103,6 @@ vncviewer <public-ip>:5900
 
 ## See Also
 
-Full documentation in `../CLAUDE.md`
+- [Deployment Checklist](./DEPLOYMENT.md) - Step-by-step guide
+- Full documentation in [CLAUDE.md](../../CLAUDE.md)
+

@@ -70,7 +70,7 @@ terraform apply tfplan.txt
 
 **Wait**: 5-10 minutes for Mac instance to be allocated
 
-**Verify**: 
+**Verify**:
 ```bash
 terraform output
 # Should show instance_id, public IP, connection commands
@@ -86,7 +86,7 @@ terraform output
 ### After 2-3 minutes
 
 - [ ] Systems Manager Session Manager should be available
-- [ ] Test connection: 
+- [ ] Test connection:
 ```bash
 INSTANCE_ID=$(terraform output -raw instance_id)
 aws ssm start-session --target $INSTANCE_ID --region us-west-2 --document-name AWS-StartInteractiveCommand
