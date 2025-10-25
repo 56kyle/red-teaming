@@ -54,18 +54,18 @@ Create the S3 bucket for Terraform state (one-time):
 ```bash
 cd terraform
 aws s3api create-bucket \
-  --bucket atlas-mac-terraform-state \
+  --bucket atlas-mac-terraform \
   --region us-west-2 \
   --create-bucket-configuration LocationConstraint=us-west-2
 
 # Enable versioning
 aws s3api put-bucket-versioning \
-  --bucket atlas-mac-terraform-state \
+  --bucket atlas-mac-terraform \
   --versioning-configuration Status=Enabled
 
 # Enable default encryption
 aws s3api put-bucket-encryption \
-  --bucket atlas-mac-terraform-state \
+  --bucket atlas-mac-terraform \
   --server-side-encryption-configuration '{
     "Rules": [{
       "ApplyServerSideEncryptionByDefault": {
@@ -76,7 +76,7 @@ aws s3api put-bucket-encryption \
 
 # Block public access
 aws s3api put-public-access-block \
-  --bucket atlas-mac-terraform-state \
+  --bucket atlas-mac-terraform \
   --public-access-block-configuration \
     "BlockPublicAcls=true,IgnorePublicAcls=true,BlockPublicPolicy=true,RestrictPublicBuckets=true"
 ```

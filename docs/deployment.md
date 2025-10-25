@@ -25,7 +25,7 @@ Use this checklist to ensure you have everything ready before deploying.
 
 ```bash
 # Copy the bucket creation commands from CLAUDE.md and run them
-# Bucket name: atlas-mac-terraform-state
+# Bucket name: atlas-mac-terraform
 # Region: us-west-2
 ```
 
