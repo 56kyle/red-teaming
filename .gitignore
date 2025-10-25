@@ -1,5 +1,8 @@
-"keyfile.json\n" 
+# Terraform Specific
+keyfile.json
+/terraform/migrations
 
+# General Python in Cookiecutter
 .mypy_cache/
 /.coverage
 /.coverage.*
