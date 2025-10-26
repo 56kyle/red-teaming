@@ -61,8 +61,8 @@ terraform/
 **Inputs**:
 - `vpc_cidr` - VPC CIDR block (default: `10.0.0.0/16`)
 - `subnet_cidr` - Subnet CIDR block (default: `10.0.1.0/24`)
-- `allowed_vnc_cidr` - IP range allowed for VNC (default: `0.0.0.0/0`)
-- `enable_vnc` - Enable VNC ports (default: `true`)
+- `allowed_vnc_cidr` - IP range allowed for VNC (no default; required if enable_vnc is true)
+- `enable_vnc` - Enable VNC ports (default: `false`)
 - `tags` - Common resource tags
 
 **Outputs**:
@@ -115,9 +115,9 @@ terraform/
 - `iam_instance_profile_name` - IAM profile from IAM module
 - `subnet_id` - Subnet from Networking module
 - `security_group_id` - Security group from Networking module
-- `enable_vnc` - Enable VNC setup
-- `vnc_password` - VNC password (sensitive)
-- `root_volume_size` - Volume size in GB (default: 250)
+- `enable_vnc` - Enable VNC setup (default: `false`)
+- `vnc_password` - VNC password (sensitive; required if enable_vnc is true)
+- `root_volume_size` - Volume size in GB (default: 100)
 - `root_volume_type` - Volume type (default: `gp3`)
 - `internet_gateway_id` - IGW for EIP dependency
 - `tags` - Common resource tags
@@ -133,9 +133,9 @@ terraform/
 
 **Key Design Decisions**:
 - Mac2.metal requires dedicated host (cannot use on-demand)
-- User data runs `scripts/vnc_setup.sh` for VNC configuration
+- User data runs `scripts/vnc_setup.sh` for VNC configuration (only if VNC enabled)
 - EIP ensures stable public IP across instance lifecycle
-- 250GB gp3 volume for adequate workspace
+- 100GB gp3 volume (sufficient for Atlas + Playwright + typical tooling)
 - AMI lookup always gets latest Mac2 image
 
 ## Module Dependencies & Data Flow
@@ -205,8 +205,9 @@ root/main.tf
 
 ## Sensitive Data Handling
 
-- **VNC Password**: Stored in `terraform.tfvars` or environment variable
-  - Set via: `export TF_VAR_vnc_password="password"`
+- **VNC Password**: Stored via environment variable (no default)
+  - Only needed if `enable_vnc=true`
+  - Set via: `export TF_VAR_vnc_password="SecurePassword123!"`
   - Never commit actual passwords to git
   - .gitignore excludes `*.tfvars`
 
@@ -240,9 +241,9 @@ root/main.tf
 ## Cost Considerations
 
 - **Dedicated Host**: ~$1.90/hour (Mac2 in us-west-2)
-- **EBS Volume**: ~$20/month (250GB gp3)
+- **EBS Volume**: ~$4/month (100GB gp3)
 - **Data Transfer**: Minimal if using Systems Manager only
-- **Total**: ~$150-200/month for 24/7 operation
+- **Total**: ~$130-170/month for 24/7 operation
 
 **To minimize costs**: Use `terraform destroy` when not actively testing
 
