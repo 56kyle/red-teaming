@@ -19,3 +19,8 @@ APP_START_TIME: datetime.datetime = datetime.datetime.now(tz=datetime.UTC)
 USER_CACHE_FOLDER: Path = user_cache_path(appname=APP_NAME, appauthor=APP_AUTHOR, ensure_exists=True)
 USER_CONFIG_FOLDER: Path = user_config_path(appname=APP_NAME, appauthor=APP_AUTHOR, ensure_exists=True)
 USER_LOG_FOLDER: Path = user_log_path(appname=APP_NAME, appauthor=APP_AUTHOR, ensure_exists=True)
+
+
+ATLAS_APP_NAME: str = "com.openai.atlas"
+ATLAS_APP_AUTHOR: str = "openai"
+ATLAS_CACHE_FOLDER: Path = user_config_path(appname=APP_NAME, appauthor=APP_AUTHOR)
