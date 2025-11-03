@@ -23,4 +23,5 @@ USER_LOG_FOLDER: Path = user_log_path(appname=APP_NAME, appauthor=APP_AUTHOR, en
 
 ATLAS_APP_NAME: str = "com.openai.atlas"
 ATLAS_APP_AUTHOR: str = "openai"
-ATLAS_CACHE_FOLDER: Path = user_config_path(appname=APP_NAME, appauthor=APP_AUTHOR)
+ATLAS_CACHE_FOLDER: Path = user_cache_path(appname=ATLAS_APP_NAME, appauthor=ATLAS_APP_AUTHOR)
+ATLAS_CONFIG_FOLDER: Path = user_config_path(appname=ATLAS_APP_NAME, appauthor=ATLAS_APP_AUTHOR)
