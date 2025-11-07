@@ -19,6 +19,7 @@ classifiers = [
 dependencies = [
     "duckdb>=1.4.1",
     "loguru>=0.7.3",
+    "openai>=2.7.1",
     "platformdirs>=4.3.8",
     "polars>=1.35.1",
     "psutil>=7.1.3",
