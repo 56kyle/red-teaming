@@ -27,8 +27,9 @@ This repository contains Terraform infrastructure code to provision an AWS EC2 M
 ### Infrastructure
 - **Instance Type**: mac2.metal (Apple M2 chip)
 - **Region**: us-west-2 (Mac instance availability)
-- **Volume**: 250GB gp3 encrypted root volume
+- **Volume**: 100GB gp3 encrypted root volume (sufficient for Atlas + Playwright)
 - **Network**: Public subnet with Elastic IP for stable access
+- **VNC**: Disabled by default (opt-in if needed)
 
 ## Prerequisites
 
@@ -81,15 +82,22 @@ aws s3api put-public-access-block \
     "BlockPublicAcls=true,IgnorePublicAcls=true,BlockPublicPolicy=true,RestrictPublicBuckets=true"
 ```
 
-### 2. Set Environment Variables
+### 2. Set Environment Variables (Optional - VNC Only)
+
+VNC is disabled by default. Only set these if you need GUI access via VNC:
 
 ```bash
-# Set VNC password
+# Enable VNC server
+export TF_VAR_enable_vnc="true"
+
+# Required: Set VNC password (must be provided if enable_vnc is true)
 export TF_VAR_vnc_password="YourSecureVNCPassword123!"
 
-# (Optional) Restrict VNC access to your IP
+# Required: Restrict VNC access to your IP (no default for security)
 export TF_VAR_allowed_vnc_cidr="YOUR_IP/32"
 ```
+
+Session Manager is the recommended primary access method (no setup needed).
 
 ### 3. Initialize Terraform
 
@@ -146,8 +154,8 @@ terraform output connection_info
 
 - **Dedicated Host**: ~$1.90/hour (us-west-2, Mac2)
 - **Data Transfer**: Minimal if using Session Manager only
-- **Storage**: ~$10/month (250GB gp3 volume)
-- **Total**: ~$140-180/month for 24/7 operation
+- **Storage**: ~$4/month (100GB gp3 volume)
+- **Total**: ~$130-170/month for 24/7 operation
 
 Terminate when not in use:
 
