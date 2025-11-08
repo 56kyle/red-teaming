@@ -3,6 +3,7 @@ import re
 from pathlib import Path
 from typing import Pattern
 
+import pyperclip
 from openai.types.conversations import Conversation
 from openai.types.responses import ResponseInputTextParam
 
@@ -32,3 +33,6 @@ if __name__ == "__main__":
     path: Path = DATA_FOLDER / "agent_wiki_degrees_01.txt"
     contents: str = path.read_text(encoding="utf-8")
     messages: list[Message] = parse_user_messages_from_raw_copied_text(contents)
+    # x = 9
+    # print(messages[x])
+    # pyperclip.copy(messages[x]["content"][0]["text"])
