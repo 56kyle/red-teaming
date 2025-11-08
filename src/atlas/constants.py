@@ -26,6 +26,7 @@ ATLAS_APP_AUTHOR: str = "openai"
 ATLAS_CACHE_FOLDER: Path = user_cache_path(appname=ATLAS_APP_NAME, appauthor=ATLAS_APP_AUTHOR)
 ATLAS_CONFIG_FOLDER: Path = user_config_path(appname=ATLAS_APP_NAME, appauthor=ATLAS_APP_AUTHOR)
 
+ATLAS_APP_EXECUTABLE_PATH: Path = Path("/Applications/ChatGPT Atlas.app")
 
 PACKAGE_FOLDER: Path = Path(__file__).parent
 REPO_FOLDER: Path = PACKAGE_FOLDER.parent.parent
