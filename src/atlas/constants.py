@@ -25,3 +25,8 @@ ATLAS_APP_NAME: str = "com.openai.atlas"
 ATLAS_APP_AUTHOR: str = "openai"
 ATLAS_CACHE_FOLDER: Path = user_cache_path(appname=ATLAS_APP_NAME, appauthor=ATLAS_APP_AUTHOR)
 ATLAS_CONFIG_FOLDER: Path = user_config_path(appname=ATLAS_APP_NAME, appauthor=ATLAS_APP_AUTHOR)
+
+
+PACKAGE_FOLDER: Path = Path(__file__).parent
+REPO_FOLDER: Path = PACKAGE_FOLDER.parent.parent
+DATA_FOLDER: Path = REPO_FOLDER / "data"
