@@ -4,13 +4,10 @@ from pathlib import Path
 
 from openai.types.conversations import ItemCreateParams
 from openai.types.responses.response_input_item_param import Message
-from pydantic import TypeAdapter
 
+from atlas._typing import PlannedConversation
 from atlas.constants import DATA_FOLDER
 from atlas.parse import parse_user_messages_from_raw_copied_text
-
-
-PlannedConversation: TypeAdapter[ItemCreateParams] = TypeAdapter(ItemCreateParams)
 
 
 def save_planned_conversation(path: Path, messages: list[Message]) -> None:
