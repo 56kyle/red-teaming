@@ -1,197 +1,248 @@
 # CLAUDE.md
 
-Red Teaming Infrastructure for OpenAI Atlas Browser on AWS Mac Instance
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 ## Project Overview
 
-This repository contains Terraform infrastructure code to provision an AWS EC2 Mac (M2) instance for red-teaming OpenAI's Atlas browser. The setup includes:
+This repository is a multi-module project for red-teaming OpenAI's Atlas browser. It combines:
 
-- EC2 Mac2.metal instance in us-west-2
-- Dedicated Host allocation (required for Mac instances)
-- AWS Systems Manager Session Manager for secure remote access
-- VNC server for GUI access
-- S3 backend with native state locking (Terraform 1.10.0+)
+1. **src/atlas**: Python package for programmatic interaction with Atlas (Playwright, Selenium, OpenAI API)
+2. **joestuff/red_teaming**: PyRIT-based red teaming harness with attack strategies and scoring engines
+3. **terraform**: AWS infrastructure (Mac2 instance) for running Atlas in a controlled environment
 
-## Architecture & Design Decisions
+The project uses modern Python tooling (Pydantic, Typer, Playwright, Selenium) with a monorepo structure and comprehensive testing framework.
 
-### Authentication & Access
-- **Primary Access**: AWS Systems Manager Session Manager (no SSH keys, IAM-based, audit-logged)
-- **Secondary Access**: VNC over public IP (encrypted session recommended)
-- **Security Groups**: Minimal ingress - only VNC port 5900, all outbound allowed
+## Project Structure
 
-### State Management
-- **Backend**: S3 with native state locking (`.tflock` files, no DynamoDB)
-- **Encryption**: State file encrypted at rest in S3
-- **Versioning**: S3 bucket versioning enabled for state recovery
+```
+red-teaming/
+├── src/atlas/                 # Main Python package for Atlas interaction
+│   ├── __main__.py           # CLI entry point (Typer)
+│   ├── agent.py              # [New] Agent implementation
+│   ├── api.py                # OpenAI API wrapper for conversations
+│   ├── constants.py          # App paths, platform-specific config
+│   ├── interact.py           # GUI automation (Playwright/Selenium)
+│   ├── demo.py               # Demo utilities & conversation management
+│   ├── parse.py              # Parse conversation data
+│   ├── process.py            # Atlas process management
+│   └── _typing.py            # Type definitions & validation
+│
+├── joestuff/red_teaming/      # PyRIT-based attack framework [legacy]
+│   ├── attack_orchestrator.py
+│   ├── custom_strategies.py
+│   ├── scoring_rules.py
+│   └── datasets/             # JSON attack prompt datasets
+│
+├── terraform/                 # AWS infrastructure
+├── tests/                     # Test suite
+│   ├── unit_tests/
+│   ├── integration_tests/
+│   └── acceptance_tests/
+│
+└── pyproject.toml            # Modern Python project config (uv-based)
+```
 
-### Infrastructure
-- **Instance Type**: mac2.metal (Apple M2 chip)
-- **Region**: us-west-2 (Mac instance availability)
-- **Volume**: 100GB gp3 encrypted root volume (sufficient for Atlas + Playwright)
-- **Network**: Public subnet with Elastic IP for stable access
-- **VNC**: Disabled by default (opt-in if needed)
+## Key Technologies
 
-## Prerequisites
+- **Python 3.9+**: Core language, async-first
+- **Pydantic 2.x**: Data validation & settings management
+- **Typer**: CLI framework
+- **Playwright & Selenium**: Browser automation for Atlas GUI
+- **OpenAI Python Client**: Conversations API integration
+- **PyRIT** (joestuff): Red teaming framework
+- **Pytest**: Testing framework with separate suites
+- **Loguru**: Structured logging
+- **DuckDB & Polars**: Data processing
 
-1. **AWS Account** with appropriate IAM permissions:
-   - EC2 (Dedicated Hosts, Instances)
-   - IAM (Roles, Policies)
-   - S3 (Bucket creation)
-   - Systems Manager (Session Manager)
+## Common Development Commands
 
-2. **Tools**:
-   - Terraform >= 1.10.0
-   - AWS CLI v2
-   - Session Manager plugin: `aws-cli-bundle` or `sessionmanagerplugin`
-
-3. **AWS Credentials**: Configure via `aws configure` or environment variables
-
-## Setup Instructions
-
-### 1. Initialize S3 Backend Bucket
-
-Create the S3 bucket for Terraform state (one-time):
+### Setup & Installation
 
 ```bash
-cd terraform
-aws s3api create-bucket \
-  --bucket atlas-mac-terraform \
-  --region us-west-2 \
-  --create-bucket-configuration LocationConstraint=us-west-2
+# Initialize environment with uv (recommended)
+uv sync
 
-# Enable versioning
-aws s3api put-bucket-versioning \
-  --bucket atlas-mac-terraform \
-  --versioning-configuration Status=Enabled
-
-# Enable default encryption
-aws s3api put-bucket-encryption \
-  --bucket atlas-mac-terraform \
-  --server-side-encryption-configuration '{
-    "Rules": [{
-      "ApplyServerSideEncryptionByDefault": {
-        "SSEAlgorithm": "AES256"
-      }
-    }]
-  }'
-
-# Block public access
-aws s3api put-public-access-block \
-  --bucket atlas-mac-terraform \
-  --public-access-block-configuration \
-    "BlockPublicAcls=true,IgnorePublicAcls=true,BlockPublicPolicy=true,RestrictPublicBuckets=true"
+# Or with pip (older method)
+pip install -e ".[dev]"
 ```
 
-### 2. Set Environment Variables (Optional - VNC Only)
-
-VNC is disabled by default. Only set these if you need GUI access via VNC:
+### Development Workflow
 
 ```bash
-# Enable VNC server
-export TF_VAR_enable_vnc="true"
+# Run tests
+pytest                           # All tests
+pytest tests/unit_tests/        # Only unit tests
+pytest tests/unit_tests/test_main.py  # Single test file
+pytest -v                       # Verbose output
+pytest --cov=src/atlas         # With coverage
 
-# Required: Set VNC password (must be provided if enable_vnc is true)
-export TF_VAR_vnc_password="YourSecureVNCPassword123!"
+# Code quality
+ruff check src/                 # Linting
+ruff format src/                # Auto-format
+pyright src/                    # Type checking
+bandit -r src/                  # Security scan
+pip-audit                       # Dependency audit
 
-# Required: Restrict VNC access to your IP (no default for security)
-export TF_VAR_allowed_vnc_cidr="YOUR_IP/32"
+# Run the CLI
+python -m atlas                 # Via module
+atlas                          # If installed
+
+# Build & distribute
+python -m build                 # Create wheel/sdist
 ```
 
-Session Manager is the recommended primary access method (no setup needed).
+### Pre-commit Hooks
 
-### 3. Initialize Terraform
+The project uses pre-commit. Install hooks:
+```bash
+pre-commit install
+pre-commit run --all-files      # Run manually
+```
+
+## Architecture Notes
+
+### src/atlas Package
+
+**Purpose**: Programmatic interface to Atlas browser for red teaming.
+
+**Core Modules**:
+
+1. **api.py** - OpenAI Client wrapper
+   - `client`: Global Client instance using `OPEN_AI_API_KEY_RED_TEAM` env var
+   - `get_conversation()`: Retrieve conversation objects from API
+   - Low-level API interaction
+
+2. **constants.py** - Platform-specific paths
+   - `ATLAS_APP_EXECUTABLE_PATH`: Path to ChatGPT Atlas.app (macOS)
+   - `ATLAS_CACHE_FOLDER`, `ATLAS_CONFIG_FOLDER`: App data locations
+   - User cache/config/log folders via platformdirs
+
+3. **interact.py** - GUI automation
+   - `sync_atlas_browser()`: Context manager launching Playwright browser context
+   - `run_conversation()`: Execute planned conversation with Atlas GUI
+   - Uses keyboard/mouse control via pynput
+   - Supports Playwright tracing for debugging
+
+4. **demo.py** - Conversation management utilities
+   - `save_planned_conversation()`: Serialize to JSON with validation
+   - `load_planned_conversation()`: Deserialize from JSON
+   - `transfer_raw_copied_to_planned_conversation()`: Parse clipboard text to conversation
+   - Works with OpenAI's `ItemCreateParams` structures
+
+5. **parse.py** - Data parsing
+   - Parse raw conversation text into structured Message objects
+   - Handles multi-turn conversation formatting
+
+6. **process.py** - Process management
+   - `get_atlas_process()`: Find running Atlas by process name
+   - Uses psutil for cross-platform process queries
+
+7. **_typing.py** - Type definitions
+   - `PlannedConversation`: Pydantic model validating conversation structure
+   - Reusable type hints across modules
+
+**Data Flow**:
+1. Load/create conversation via `demo.py`
+2. Launch browser via `interact.py`
+3. Run conversation, capturing interactions
+4. Parse results via `parse.py`
+5. Save to structured format with validation
+
+### joestuff/red_teaming [Legacy]
+
+This is a complete PyRIT-based red teaming framework (separate documentation in joestuff/red_teaming/ARCHITECTURE.md). Key difference from src/atlas:
+- Uses PyRIT framework abstractions
+- API-based testing (not GUI automation)
+- Automated scoring and reporting
+- Multiple attack strategy categories
+
+### Testing Architecture
+
+- **unit_tests/**: Test __main__ CLI command
+- **integration_tests/**: (Currently empty, planned for API integration tests)
+- **acceptance_tests/**: (Currently empty, planned for full system tests)
+- **conftest.py**: Shared pytest fixtures
+- Tests importable as `from atlas import __main__`
+
+### Configuration & Secrets
+
+- **Environment Variables** (required):
+  - `OPEN_AI_API_KEY_RED_TEAM`: OpenAI API key for conversations API
+  - `ATLAS_APP_EXECUTABLE_PATH`: Can override in constants.py
+
+- **Dev Dependencies** (pyproject.toml):
+  - Split into `dev` group
+  - Includes pytest, pyright, ruff, commitizen
+
+## Key Design Decisions
+
+1. **Pydantic Validation**: Conversation structures validated via `PlannedConversation` model
+2. **Context Managers**: Browser sessions use `sync_atlas_browser()` for proper cleanup
+3. **Cross-platform**: Uses platformdirs for OS-appropriate paths
+4. **Logging**: Integrated with loguru for structured logs
+5. **CLI-first**: Typer provides clean command-line interface
+6. **Type Safety**: Pyright for static analysis, type hints throughout
+
+## Development Patterns
+
+### Adding New Commands
+
+```python
+# In __main__.py
+from typer import Typer
+
+app = Typer()
+
+@app.command()
+def my_command(arg: str) -> None:
+    """Do something with Atlas."""
+    # Implementation
+```
+
+### Working with Conversations
+
+```python
+# Load planned conversation
+from atlas.demo import load_planned_conversation
+from pathlib import Path
+
+params = load_planned_conversation(Path("data/conversation.json"))
+
+# Run via browser
+from atlas.interact import sync_atlas_browser
+with sync_atlas_browser() as browser:
+    # Automation code here
+    pass
+```
+
+### Adding Tests
 
 ```bash
-cd terraform
-terraform init
+# Unit tests: src/atlas module behavior
+pytest tests/unit_tests/test_*.py -v
+
+# Integration tests: API + module interaction
+pytest tests/integration_tests/ -v
+
+# Acceptance tests: Full system behavior
+pytest tests/acceptance_tests/ -v
 ```
 
-### 4. Plan & Apply
+## Terraform Infrastructure
 
-```bash
-# Review what will be created
-terraform plan
+The `terraform/` directory provisions an AWS Mac2 instance for running Atlas. See `terraform/` for deployment details. Note: This is separate from the Python package in `src/atlas`.
 
-# Create infrastructure
-terraform apply
-```
+## Known Limitations & TODOs
 
-Note: Mac instance allocation requires a minimum 24-hour commitment. First allocation may take 5-10 minutes.
+1. **agent.py**: Currently empty stub (pending implementation)
+2. **Integration tests**: Empty - need API integration tests
+3. **Acceptance tests**: Empty - need full system tests
+4. **interact.py**: Incomplete `run_conversation()` and `enter_prompt()` implementations
+5. **Multi-platform support**: Some paths hardcoded for macOS (ATLAS_APP_EXECUTABLE_PATH)
 
-## Usage
+## Debugging Tips
 
-### Connect via Session Manager
-
-```bash
-# Get instance ID from outputs
-INSTANCE_ID=$(terraform output -raw instance_id)
-
-# Start interactive shell
-aws ssm start-session --target $INSTANCE_ID --region us-west-2 --document-name AWS-StartInteractiveCommand
-```
-
-### Connect via VNC
-
-```bash
-# Get VNC host from outputs
-VNC_HOST=$(terraform output -raw instance_public_ip)
-
-# macOS/Linux
-vncviewer $VNC_HOST:5900
-
-# Or use the open command
-open vnc://$VNC_HOST:5900
-```
-
-### View Instance Details
-
-```bash
-terraform output
-terraform output connection_info
-```
-
-## Cost Considerations
-
-- **Dedicated Host**: ~$1.90/hour (us-west-2, Mac2)
-- **Data Transfer**: Minimal if using Session Manager only
-- **Storage**: ~$4/month (100GB gp3 volume)
-- **Total**: ~$130-170/month for 24/7 operation
-
-Terminate when not in use:
-
-```bash
-terraform destroy
-```
-
-## Troubleshooting
-
-### Session Manager not connecting
-- Ensure IAM user has `AmazonSSMManagedInstanceCore` policy
-- Check instance has public IP (Elastic IP assigned)
-- Verify security group allows outbound HTTPS (port 443)
-
-### VNC password not working
-- SSH via Session Manager and check VNC logs:
-  ```
-  cat ~/.vnc/vnc.log
-  cat ~/.vnc/vnc.err
-  ```
-
-### Instance not appearing in Session Manager
-- Allow 2-3 minutes for SSM agent to register
-- Check EC2 instance has IAM role attached
-- Verify instance public IP is reachable
-
-## File Structure
-
-```
-terraform/
-├── main.tf              # EC2 instance, IAM, Dedicated Host
-├── backend.tf           # S3 backend with native locking
-├── security.tf          # VPC, subnets, security groups
-├── variables.tf         # Input variables
-├── outputs.tf           # Output values
-├── terraform.tfvars     # Variable values (env var overrides)
-├── vnc_setup.sh         # VNC installation & configuration
-└── .gitignore          # Ignore state files
-```
+- **Process not found**: Ensure Atlas application is running: `ps aux | grep Atlas`
+- **API errors**: Check `OPEN_AI_API_KEY_RED_TEAM` environment variable is set
+- **Playwright issues**: Check browser executable path, may differ on your system
+- **Tracing**: Use `context.tracing` in interact.py to record browser interactions for debugging
