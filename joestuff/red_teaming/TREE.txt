@@ -1,0 +1,103 @@
+Red Teaming Harness - Project Structure
+========================================
+
+red_teaming/
+│
+├── 📋 Core Framework (1,910 lines Python)
+│   ├── config.py                  - Configuration management
+│   ├── atlas_target.py            - PyRIT target for Atlas API
+│   ├── custom_strategies.py       - 6 attack categories, 71 prompts
+│   ├── scoring_rules.py           - 4 intelligent scorers
+│   ├── attack_orchestrator.py     - Main execution engine
+│   └── report_generator.py        - HTML/JSON report generation
+│
+├── 🎯 Usage & Examples
+│   └── example_usage.py           - 6 detailed usage examples
+│
+├── 📊 Attack Datasets (JSON)
+│   ├── safety_violations.json     - Content policy tests (10)
+│   ├── prompt_injections.json     - System prompt extraction (15)
+│   ├── jailbreaks.json            - Restriction bypass (15)
+│   └── data_leakage.json          - PII extraction (15)
+│
+├── 📚 Documentation (15KB)
+│   ├── README.md                  - Complete project guide (8.7KB)
+│   ├── QUICK_START.md             - 5-minute setup guide (4.7KB)
+│   ├── ARCHITECTURE.md            - Deep technical dive (12.4KB)
+│   ├── PROJECT_SUMMARY.md         - High-level overview (10KB)
+│   └── TREE.txt                   - This file
+│
+├── ⚙️ Configuration
+│   ├── requirements.txt           - Python dependencies
+│   ├── .env.example              - Configuration template
+│   └── .gitignore                - Git exclusions
+│
+└── 🚀 Quick Start
+    └── run_tests.sh              - One-command setup & run
+
+Generated Directories (auto-created):
+├── results/                       - Test results (JSON)
+└── reports/                       - HTML reports
+
+Key Statistics
+==============
+✓ Python Files: 7
+✓ Lines of Code: 1,910
+✓ Documentation Files: 5
+✓ Attack Categories: 6
+✓ Total Attack Prompts: 71
+✓ Scoring Engines: 4
+✓ Usage Examples: 6
+✓ Setup Time: < 5 minutes
+✓ First Test: 1 command
+
+Attack Coverage
+===============
+Safety Violations      ████████████ 10 prompts
+Prompt Injections      ██████████████████████ 15 prompts
+Jailbreak Attempts     ██████████████████████ 15 prompts
+Data Leakage Tests     ██████████████████████ 15 prompts
+Bias & Fairness        ████████ 8 prompts
+Hallucination Tests    ████████ 8 prompts
+                       ─────────────────────
+                       TOTAL: 71 prompts
+
+Features
+========
+✅ Automated red teaming campaigns
+✅ PyRIT framework integration
+✅ Multi-turn conversation attacks
+✅ Rate limiting & error handling
+✅ Intelligent response scoring
+✅ Severity classification
+✅ HTML reports with visualizations
+✅ JSON export for analysis
+✅ Progress tracking
+✅ Extensible architecture
+✅ Comprehensive documentation
+✅ Usage examples
+✅ Security best practices
+
+Quick Commands
+==============
+Setup:
+  $ pip install -r requirements.txt
+  $ cp .env.example .env
+  $ vi .env  # Add your API key
+
+Run:
+  $ python attack_orchestrator.py        # Full campaign
+  $ python example_usage.py              # Interactive examples
+  $ ./run_tests.sh                       # One-command run
+
+Analyze:
+  $ python report_generator.py results/results_*.json
+  $ open reports/report_*.html
+
+Customize:
+  $ vi custom_strategies.py              # Add attack strategies
+  $ vi scoring_rules.py                  # Add custom scorers
+  $ vi datasets/my_tests.json            # Add custom prompts
+
+Status: ✅ READY TO USE
+
