@@ -1,0 +1,40 @@
+# Core Red Teaming Framework
+pyrit>=0.4.0
+
+# OpenAI Integration
+openai>=1.12.0
+
+# Browser Automation (for Atlas testing)
+playwright>=1.40.0
+
+# Web Server (for hosting test pages)
+flask>=3.0.0
+
+# HTTP and API handling
+requests>=2.31.0
+aiohttp>=3.9.0
+
+# Configuration and Environment
+python-dotenv>=1.0.0
+pyyaml>=6.0.1
+
+# Data handling and analysis
+pandas>=2.0.0
+numpy>=1.24.0
+
+# Logging and monitoring
+colorlog>=6.8.0
+tqdm>=4.66.0
+
+# Reporting
+jinja2>=3.1.3
+markdown>=3.5.0
+
+# Utilities
+python-dateutil>=2.8.2
+jsonlines>=4.0.0
+
+# Testing (optional but recommended)
+pytest>=7.4.0
+pytest-asyncio>=0.21.0
+
