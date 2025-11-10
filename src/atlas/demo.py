@@ -2,8 +2,10 @@
 import json
 from pathlib import Path
 
+import pyperclip
 from openai.types.conversations import ItemCreateParams
 from openai.types.responses.response_input_item_param import Message
+from openai.types.responses.response_input_param import ResponseInputItemParam
 
 from atlas._typing import PlannedConversation
 from atlas.constants import DATA_FOLDER
@@ -35,5 +37,9 @@ def transfer_raw_copied_to_planned_conversation(path: Path) -> None:
 
 
 if __name__ == "__main__":
-    path: Path = DATA_FOLDER / "agent_wiki_degrees_01.txt"
-    transfer_raw_copied_to_planned_conversation(path)
+    path: Path = DATA_FOLDER / "agent_wiki_degrees_02.json"
+    params: ItemCreateParams = load_planned_conversation(path=path)
+    msgs: list[ResponseInputItemParam] = list(params["items"])
+    x: int = 3
+    print(msgs[x]["content"][0]["text"])
+    pyperclip.copy(msgs[x]["content"][0]["text"])
