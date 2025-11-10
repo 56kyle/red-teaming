@@ -29,6 +29,7 @@ dependencies = [
     "pynput>=1.8.1",
     "pyperclip>=1.11.0",
     "scapy>=2.6.1",
+    "selenium>=4.36.0",
     "typer>=0.15.4",
     "typing-extensions>=4.13.2",
 ]
