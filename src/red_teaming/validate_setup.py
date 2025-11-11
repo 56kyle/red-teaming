@@ -176,7 +176,7 @@ def check_test_pages():
     """Check if test pages exist."""
     print_header("Test Pages")
     
-    test_pages_dir = Path("test_pages")
+    test_pages_dir = Path("../../tests/data/test_pages")
     if not test_pages_dir.exists():
         print_check("test_pages directory", False, "Directory not found")
         return False
