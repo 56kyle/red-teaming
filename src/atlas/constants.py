@@ -7,6 +7,7 @@ from pathlib import Path
 from platformdirs import user_cache_path
 from platformdirs import user_config_path
 from platformdirs import user_log_path
+from pydantic import ConfigDict
 
 
 _FILE_SAFE_DATETIME_FORMAT: str = "%Y-%m-%dT%H-%M-%SZ"
@@ -25,3 +26,11 @@ ATLAS_APP_NAME: str = "com.openai.atlas"
 ATLAS_APP_AUTHOR: str = "openai"
 ATLAS_CACHE_FOLDER: Path = user_cache_path(appname=ATLAS_APP_NAME, appauthor=ATLAS_APP_AUTHOR)
 ATLAS_CONFIG_FOLDER: Path = user_config_path(appname=ATLAS_APP_NAME, appauthor=ATLAS_APP_AUTHOR)
+
+ATLAS_APP_EXECUTABLE_PATH: Path = Path("/Applications/ChatGPT Atlas.app/Contents/MacOS/ChatGPT Atlas")
+
+DEFAULT_PYDANTIC_CONFIG: ConfigDict = ConfigDict(arbitrary_types_allowed=True)
+
+PACKAGE_FOLDER: Path = Path(__file__).parent
+REPO_FOLDER: Path = PACKAGE_FOLDER.parent.parent
+DATA_FOLDER: Path = REPO_FOLDER / "data"
