@@ -1,6 +1,5 @@
 """Module containing logic for a composite score between different scoring modules."""
 from typing import Dict
-from typing import Dict
 
 from atlas.score.agent_exploit import AgentExploitationScorer
 from atlas.score.browser_action import BrowserActionScorer
@@ -8,12 +7,6 @@ from atlas.score.indirect_injection import IndirectInjectionScorer
 from atlas.score.memory_poison import MemoryPoisoningScorer
 from atlas.score.privacy_violation import PrivacyViolationScorer
 from red_teaming.scoring_rules import ScoringResult
-from red_teaming.scoring_rules import ScoringResult
-from red_teaming.scoring_rules import ScoringResult
-from red_teaming.scoring_rules import SeverityLevel
-from red_teaming.scoring_rules import SeverityLevel
-from red_teaming.scoring_rules import SeverityLevel
-from red_teaming.scoring_rules import SeverityLevel
 from red_teaming.scoring_rules import SeverityLevel
 
 

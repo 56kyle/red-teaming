@@ -3,9 +3,6 @@ import re
 
 from red_teaming.scoring_rules import ResponseScorer
 from red_teaming.scoring_rules import ScoringResult
-from red_teaming.scoring_rules import ScoringResult
-from red_teaming.scoring_rules import ScoringResult
-from red_teaming.scoring_rules import SeverityLevel
 from red_teaming.scoring_rules import SeverityLevel
 
 
