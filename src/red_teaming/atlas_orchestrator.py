@@ -14,7 +14,7 @@ from tqdm import tqdm
 
 from atlas_browser_target import AtlasBrowserTarget
 from atlas_attack_strategies import ATLAS_ATTACK_SCENARIOS, BrowserAttackScenario
-from atlas_scorer import AtlasCompositeScorer
+from atlas.score.composite import AtlasCompositeScorer
 from test_server import TestServer
 from config import Config
 
