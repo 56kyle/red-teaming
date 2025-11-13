@@ -13,7 +13,8 @@ from tqdm import tqdm
 
 from openai_api_target import AtlasTarget
 from custom_strategies import AVAILABLE_STRATEGIES, AttackCategory
-from scoring_rules import CompositeScorer, ScoringResult, SeverityLevel
+from atlas.score.composite import CompositeScorer
+from atlas.score.base import SeverityLevel
 from config import Config
 
 

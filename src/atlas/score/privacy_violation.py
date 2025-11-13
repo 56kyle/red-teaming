@@ -1,9 +1,10 @@
 """Module containing logic defining how an Atlas privacy violation will be scored."""
+
 import re
 
-from red_teaming.scoring_rules import ResponseScorer
-from red_teaming.scoring_rules import ScoringResult
-from red_teaming.scoring_rules import SeverityLevel
+from atlas.score.base import ResponseScorer
+from atlas.score.base import ScoringResult
+from atlas.score.base import SeverityLevel
 
 
 class PrivacyViolationScorer(ResponseScorer):

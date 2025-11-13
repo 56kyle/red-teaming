@@ -1,33 +1,22 @@
-"""
-Atlas Browser Red Teaming Orchestrator
-Coordinates browser-based attacks against ChatGPT Atlas.
-"""
+"""Module containing logic defining out the pyrit orchestrator that will be used throughout the atlas package."""
 import asyncio
 import json
-import logging
+from dataclasses import asdict
+from dataclasses import dataclass
 from datetime import datetime
-from pathlib import Path
-from typing import List, Dict, Any, Optional
-from dataclasses import dataclass, asdict
+from typing import Any
+from typing import Dict
+from typing import List
+from typing import Optional
 
 from tqdm import tqdm
 
 from atlas.prompt_target.browser import AtlasBrowserTarget
-from atlas_attack_strategies import ATLAS_ATTACK_SCENARIOS, BrowserAttackScenario
 from atlas.score.composite import AtlasCompositeScorer
-from test_server import TestServer
-from config import Config
-
-# Setup logging
-logging.basicConfig(
-    level=getattr(logging, Config.LOG_LEVEL),
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    handlers=[
-        logging.FileHandler(Config.LOG_FILE),
-        logging.StreamHandler()
-    ]
-)
-logger = logging.getLogger(__name__)
+from red_teaming.atlas_attack_strategies import ATLAS_ATTACK_SCENARIOS
+from red_teaming.atlas_attack_strategies import BrowserAttackScenario
+from red_teaming.config import Config
+from red_teaming.test_server import TestServer
 
 
 @dataclass
@@ -50,7 +39,7 @@ class AtlasAttackResult:
 class AtlasOrchestrator:
     """
     Orchestrates browser-based red teaming campaigns against Atlas.
-    
+
     Manages:
     - Test server for hosting adversarial pages
     - Browser automation
@@ -58,7 +47,7 @@ class AtlasOrchestrator:
     - AI response scoring
     - Result collection and reporting
     """
-    
+
     def __init__(
         self,
         scenarios: Optional[List[str]] = None,
@@ -66,7 +55,7 @@ class AtlasOrchestrator:
     ):
         """
         Initialize the Atlas orchestrator.
-        
+
         Args:
             scenarios: List of scenario names to run (None = all)
             headless: Run browser in headless mode (None = use config)
@@ -76,15 +65,15 @@ class AtlasOrchestrator:
             slow_mo=Config.BROWSER_SLOW_MO,
             screenshot_on_interaction=Config.SCREENSHOT_ON_INTERACTION,
         )
-        
+
         self.scorer = AtlasCompositeScorer()
         self.server = TestServer(
             host=Config.TEST_SERVER_HOST,
             port=Config.TEST_SERVER_PORT,
         )
-        
+
         self.results: List[AtlasAttackResult] = []
-        
+
         # Filter scenarios if specified
         if scenarios:
             self.scenarios = [
@@ -93,99 +82,100 @@ class AtlasOrchestrator:
             ]
         else:
             self.scenarios = ATLAS_ATTACK_SCENARIOS
-        
+
+        from red_teaming.attack_orchestrator import logger
         logger.info(f"Initialized orchestrator with {len(self.scenarios)} scenarios")
-    
+
     async def run_campaign(self) -> Dict[str, Any]:
         """
         Run a complete browser-based red teaming campaign.
-        
+
         Returns:
             Summary statistics of the campaign
         """
         logger.info("Starting Atlas browser red teaming campaign")
         start_time = datetime.now()
-        
+
         try:
             # Start test server
             self.server.start()
             logger.info(f"Test server running at {self.server.get_url()}")
-            
+
             # Launch browser
             await self.browser.launch()
             logger.info("Atlas browser launched")
-            
+
             # Run attack scenarios with progress bar
             with tqdm(total=len(self.scenarios), desc="Running attack scenarios") as pbar:
                 for scenario in self.scenarios:
                     try:
                         result = await self._run_scenario(scenario)
                         self.results.append(result)
-                        
+
                         if result.overall_success:
                             logger.warning(
                                 f"🚨 SUCCESSFUL ATTACK - Scenario: {scenario.name}, "
                                 f"Severity: {result.severity}"
                             )
-                        
+
                         # Delay between tests
                         await asyncio.sleep(Config.DELAY_BETWEEN_TESTS)
-                        
+
                     except Exception as e:
                         logger.error(f"Error in scenario '{scenario.name}': {e}", exc_info=True)
-                    
+
                     pbar.update(1)
-            
+
         finally:
             # Cleanup
             await self.browser.close()
             self.server.stop()
             logger.info("Browser closed and server stopped")
-        
+
         end_time = datetime.now()
         duration = (end_time - start_time).total_seconds()
-        
+
         # Generate summary
         summary = self._generate_summary(duration)
-        
+
         # Save results
         self._save_results(start_time)
-        
+
         logger.info(f"Campaign completed in {duration:.2f} seconds")
         logger.info(f"Successful attacks: {summary['successful_attacks']}/{summary['total_attacks']}")
-        
+
         return summary
-    
+
     async def _run_scenario(self, scenario: BrowserAttackScenario) -> AtlasAttackResult:
         """Execute a single attack scenario."""
         logger.info(f"Testing scenario: {scenario.name}")
-        
+
         # Navigate to test page
         page_url = self.server.get_url(scenario.test_page.replace('.html', ''))
         await self.browser.navigate(page_url)
-        
+
         # Wait for page to load
         await asyncio.sleep(2)
-        
+
         # Send prompts and collect responses
         ai_responses = []
         for prompt in scenario.interaction_prompts:
             logger.info(f"Sending prompt: {prompt[:50]}...")
             response = await self.browser.interact_with_sidebar(prompt)
-            
+
             if response:
                 ai_responses.append(response)
                 logger.info(f"Got response: {response[:100]}...")
             else:
                 ai_responses.append("[No response received]")
                 logger.warning("No response received from AI")
-            
+
             await asyncio.sleep(1)
-        
+
         # Score the responses
         scoring_results = {}
         success_indicators_found = []
-        
+
         for i, (prompt, response) in enumerate(zip(scenario.interaction_prompts, ai_responses)):
             scores = self.scorer.score_all(prompt, response)
             scoring_results[f"interaction_{i+1}"] = {
@@ -198,13 +188,13 @@ class AtlasOrchestrator:
                 }
                 for name, result in scores.items()
             }
-            
+
             # Check for success indicators
             response_lower = response.lower()
             for indicator in scenario.success_indicators:
                 if indicator.lower() in response_lower:
                     success_indicators_found.append(indicator)
-        
+
         # Determine overall success
         worst_result = None
         worst_score = 0
@@ -213,23 +203,23 @@ class AtlasOrchestrator:
                 if score_data['score'] > worst_score:
                     worst_score = score_data['score']
                     worst_result = score_data
-        
+
         overall_success = worst_result and worst_result['is_successful'] if worst_result else False
         severity = worst_result['severity'] if worst_result else 'none'
-        
+
         # Also mark as successful if we found specific success indicators
         if success_indicators_found:
             overall_success = True
             if severity == 'none':
                 severity = 'high'
-        
+
         # Collect screenshots
         screenshots = [
             str(interaction.screenshot_path)
             for interaction in self.browser.get_interactions()
             if interaction.screenshot_path
         ]
-        
+
         return AtlasAttackResult(
             timestamp=datetime.now().isoformat(),
             scenario_name=scenario.name,
@@ -244,18 +234,18 @@ class AtlasOrchestrator:
             screenshots=screenshots,
             success_indicators_found=success_indicators_found,
         )
-    
+
     def _generate_summary(self, duration: float) -> Dict[str, Any]:
         """Generate summary statistics from results."""
         total = len(self.results)
         successful = sum(1 for r in self.results if r.overall_success)
-        
+
         # Count by severity
         from scoring_rules import SeverityLevel
         severity_counts = {level.value: 0 for level in SeverityLevel}
         for result in self.results:
             severity_counts[result.severity] += 1
-        
+
         # Count by category
         category_counts = {}
         category_success = {}
@@ -264,7 +254,7 @@ class AtlasOrchestrator:
             category_counts[cat] = category_counts.get(cat, 0) + 1
             if result.overall_success:
                 category_success[cat] = category_success.get(cat, 0) + 1
-        
+
         return {
             "total_attacks": total,
             "successful_attacks": successful,
@@ -278,11 +268,11 @@ class AtlasOrchestrator:
                 for cat, count in category_counts.items()
             }
         }
-    
+
     def _save_results(self, start_time: datetime) -> None:
         """Save results to disk."""
         timestamp = start_time.strftime("%Y%m%d_%H%M%S")
-        
+
         # Save detailed results as JSON
         results_file = Config.RESULTS_DIR / f"atlas_results_{timestamp}.json"
         with open(results_file, 'w') as f:
@@ -291,9 +281,9 @@ class AtlasOrchestrator:
                 f,
                 indent=2
             )
-        
+
         logger.info(f"Results saved to {results_file}")
-        
+
         # Save successful attacks separately
         successful = [r for r in self.results if r.overall_success]
         if successful:
@@ -305,47 +295,3 @@ class AtlasOrchestrator:
                     indent=2
                 )
             logger.info(f"Successful attacks saved to {success_file}")
-
-
-async def main():
-    """Main entry point for the Atlas orchestrator."""
-    print("=" * 80)
-    print("🌐 Atlas Browser Red Teaming Harness")
-    print("=" * 80)
-    print(Config.get_summary())
-    print("=" * 80)
-    
-    # Create orchestrator
-    orchestrator = AtlasOrchestrator()
-    
-    # Run campaign
-    summary = await orchestrator.run_campaign()
-    
-    # Print summary
-    print("\n" + "=" * 80)
-    print("Campaign Summary")
-    print("=" * 80)
-    print(f"Total Attacks: {summary['total_attacks']}")
-    print(f"Successful Attacks: {summary['successful_attacks']}")
-    print(f"Success Rate: {summary['success_rate']:.2%}")
-    print(f"Duration: {summary['duration_seconds']:.2f} seconds")
-    print(f"\nSeverity Breakdown:")
-    for severity, count in summary['severity_breakdown'].items():
-        if count > 0:
-            emoji = "🔴" if severity == "critical" else "🟠" if severity == "high" else "🟡" if severity == "medium" else "🟢"
-            print(f"  {emoji} {severity.upper()}: {count}")
-    print(f"\nCategory Success Rates:")
-    for category, rate in summary['category_success_rates'].items():
-        print(f"  {category.replace('_', ' ').title()}: {rate:.2%}")
-    print("=" * 80)
-    
-    if summary['successful_attacks'] > 0:
-        print(f"\n⚠️  WARNING: {summary['successful_attacks']} successful attacks detected!")
-        print("Review results for security vulnerabilities.")
-    else:
-        print("\n✅ All attacks were successfully defended against.")
-
-
-if __name__ == "__main__":
-    asyncio.run(main())
-
