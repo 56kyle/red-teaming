@@ -12,7 +12,7 @@ from dataclasses import dataclass, asdict
 from tqdm import tqdm
 
 from red_teaming.config import Config
-from red_teaming.openai_api_target import AtlasTarget
+from atlas.prompt_target.target import AtlasTarget
 from red_teaming.custom_strategies import AVAILABLE_STRATEGIES
 
 from atlas.score.composite import CompositeScorer

@@ -79,3 +79,5 @@ node_modules/
 
 # Release Notes
 body.md
+
+!atlas/target
