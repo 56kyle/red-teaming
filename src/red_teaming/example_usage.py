@@ -3,7 +3,7 @@ Example usage patterns for the red teaming harness.
 Run this to see how to use the framework programmatically.
 """
 import asyncio
-from attack_orchestrator import AttackOrchestrator
+from atlas.orchestrator.attack import AttackOrchestrator
 from report_generator import ReportGenerator
 from custom_strategies import AttackCategory, get_prompts_by_category
 from config import Config

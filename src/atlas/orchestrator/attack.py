@@ -1,21 +1,22 @@
-"""
-Main test orchestrator for running automated red teaming campaigns.
+"""Main test orchestrator for running automated red teaming campaigns.
+
 This is the entry point for executing attacks against Atlas.
 """
+
 import asyncio
 import json
 import logging
 from datetime import datetime
-from pathlib import Path
 from typing import List, Dict, Any, Optional
 from dataclasses import dataclass, asdict
 from tqdm import tqdm
 
-from openai_api_target import AtlasTarget
-from custom_strategies import AVAILABLE_STRATEGIES, AttackCategory
+from red_teaming.config import Config
+from red_teaming.openai_api_target import AtlasTarget
+from red_teaming.custom_strategies import AVAILABLE_STRATEGIES
+
 from atlas.score.composite import CompositeScorer
 from atlas.score.base import SeverityLevel
-from config import Config
 
 
 # Setup logging
@@ -51,7 +52,7 @@ class AttackOrchestrator:
     This class manages the execution of multiple attack strategies,
     collects results, and generates reports.
     """
-    
+
     def __init__(
         self,
         strategies: Optional[List[str]] = None,
@@ -67,7 +68,7 @@ class AttackOrchestrator:
         self.target = AtlasTarget()
         self.scorer = CompositeScorer()
         self.results: List[AttackResult] = []
-        
+
         # Filter strategies if specified
         if strategies:
             self.strategies = [
@@ -76,11 +77,11 @@ class AttackOrchestrator:
             ]
         else:
             self.strategies = AVAILABLE_STRATEGIES
-        
+
         self.max_prompts_per_strategy = max_prompts_per_strategy
-        
+
         logger.info(f"Initialized orchestrator with {len(self.strategies)} strategies")
-    
+
     async def run_campaign(self) -> Dict[str, Any]:
         """
         Run a complete red teaming campaign.
@@ -90,7 +91,7 @@ class AttackOrchestrator:
         """
         logger.info("Starting red teaming campaign")
         start_time = datetime.now()
-        
+
         # Collect all prompts to run
         total_prompts = 0
         for strategy in self.strategies:
@@ -98,63 +99,63 @@ class AttackOrchestrator:
             if self.max_prompts_per_strategy:
                 prompts = prompts[:self.max_prompts_per_strategy]
             total_prompts += len(prompts)
-        
+
         logger.info(f"Total prompts to test: {total_prompts}")
-        
+
         # Run attacks with progress bar
         with tqdm(total=total_prompts, desc="Running attacks") as pbar:
             for strategy in self.strategies:
                 await self._run_strategy(strategy, pbar)
-        
+
         end_time = datetime.now()
         duration = (end_time - start_time).total_seconds()
-        
+
         # Generate summary
         summary = self._generate_summary(duration)
-        
+
         # Save results
         self._save_results(start_time)
-        
+
         logger.info(f"Campaign completed in {duration:.2f} seconds")
         logger.info(f"Successful attacks: {summary['successful_attacks']}/{summary['total_attacks']}")
-        
+
         return summary
-    
+
     async def _run_strategy(self, strategy, pbar) -> None:
         """Run all prompts for a single strategy."""
         logger.info(f"Testing strategy: {strategy.name}")
-        
+
         prompts = strategy.get_prompts()
         if self.max_prompts_per_strategy:
             prompts = prompts[:self.max_prompts_per_strategy]
-        
+
         for prompt in prompts:
             # Reset conversation for each new prompt
             self.target.reset_conversation()
-            
+
             try:
                 result = await self._execute_attack(strategy, prompt)
                 self.results.append(result)
-                
+
                 # Log if attack was successful
                 if result.overall_success:
                     logger.warning(
                         f"SUCCESSFUL ATTACK - Strategy: {strategy.name}, "
                         f"Severity: {result.severity}"
                     )
-                
+
             except Exception as e:
                 logger.error(f"Error executing attack: {e}", exc_info=True)
-            
+
             pbar.update(1)
-            
+
             # Small delay between prompts
             await asyncio.sleep(0.1)
-    
+
     async def _execute_attack(self, strategy, prompt: str) -> AttackResult:
         """Execute a single attack and score the result."""
         from pyrit.models import PromptRequestResponse, PromptRequestPiece
-        
+
         # Create prompt request
         request_piece = PromptRequestPiece(
             role="user",
@@ -163,19 +164,19 @@ class AttackOrchestrator:
             original_value_data_type="text",
             converted_value_data_type="text",
         )
-        
+
         request = PromptRequestResponse(request_pieces=[request_piece])
-        
+
         # Send to Atlas
         response = await self.target.send_prompt_async(request)
-        
+
         # Extract response text
         response_text = response.request_pieces[-1].converted_value
-        
+
         # Score the response
         scoring_results = self.scorer.score_all(prompt, response_text)
         worst_result = self.scorer.get_worst_result(scoring_results)
-        
+
         # Create attack result
         return AttackResult(
             timestamp=datetime.now().isoformat(),
@@ -197,17 +198,17 @@ class AttackOrchestrator:
             severity=worst_result.severity.value,
             conversation_turns=self.target.get_conversation_length(),
         )
-    
+
     def _generate_summary(self, duration: float) -> Dict[str, Any]:
         """Generate summary statistics from results."""
         total = len(self.results)
         successful = sum(1 for r in self.results if r.overall_success)
-        
+
         # Count by severity
         severity_counts = {level.value: 0 for level in SeverityLevel}
         for result in self.results:
             severity_counts[result.severity] += 1
-        
+
         # Count by category
         category_counts = {}
         category_success = {}
@@ -216,7 +217,7 @@ class AttackOrchestrator:
             category_counts[cat] = category_counts.get(cat, 0) + 1
             if result.overall_success:
                 category_success[cat] = category_success.get(cat, 0) + 1
-        
+
         return {
             "total_attacks": total,
             "successful_attacks": successful,
@@ -230,11 +231,11 @@ class AttackOrchestrator:
                 for cat, count in category_counts.items()
             }
         }
-    
+
     def _save_results(self, start_time: datetime) -> None:
         """Save results to disk."""
         timestamp = start_time.strftime("%Y%m%d_%H%M%S")
-        
+
         # Save detailed results as JSON
         results_file = Config.RESULTS_DIR / f"results_{timestamp}.json"
         with open(results_file, 'w') as f:
@@ -243,9 +244,9 @@ class AttackOrchestrator:
                 f,
                 indent=2
             )
-        
+
         logger.info(f"Results saved to {results_file}")
-        
+
         # Save successful attacks separately for easy review
         successful = [r for r in self.results if r.overall_success]
         if successful:
@@ -266,13 +267,13 @@ async def main():
     print("=" * 80)
     print(Config.get_summary())
     print("=" * 80)
-    
+
     # Create orchestrator
     orchestrator = AttackOrchestrator()
-    
+
     # Run campaign
     summary = await orchestrator.run_campaign()
-    
+
     # Print summary
     print("\n" + "=" * 80)
     print("Campaign Summary")
@@ -293,4 +294,3 @@ async def main():
 
 if __name__ == "__main__":
     asyncio.run(main())
-
