@@ -4,14 +4,6 @@ import time
 from dataclasses import dataclass
 from pathlib import Path
 from typing import List
-from typing import List
-from typing import Optional
-from typing import Optional
-from typing import Optional
-from typing import Optional
-from typing import Optional
-from typing import Optional
-from typing import Optional
 from typing import Optional
 
 from playwright.async_api import Browser
@@ -19,33 +11,6 @@ from playwright.async_api import BrowserContext
 from playwright.async_api import Page
 from playwright.async_api import async_playwright
 
-from pyrit.prompt_target import PromptTarget
-
-from red_teaming.atlas_browser_target import logger
-from red_teaming.atlas_browser_target import logger
-from red_teaming.atlas_browser_target import logger
-from red_teaming.atlas_browser_target import logger
-from red_teaming.atlas_browser_target import logger
-from red_teaming.atlas_browser_target import logger
-from red_teaming.atlas_browser_target import logger
-from red_teaming.atlas_browser_target import logger
-from red_teaming.atlas_browser_target import logger
-from red_teaming.atlas_browser_target import logger
-from red_teaming.atlas_browser_target import logger
-from red_teaming.atlas_browser_target import logger
-from red_teaming.atlas_browser_target import logger
-from red_teaming.atlas_browser_target import logger
-from red_teaming.atlas_browser_target import logger
-from red_teaming.atlas_browser_target import logger
-from red_teaming.atlas_browser_target import logger
-from red_teaming.atlas_browser_target import logger
-from red_teaming.atlas_browser_target import logger
-from red_teaming.config import Config
-from red_teaming.config import Config
-from red_teaming.config import Config
-from red_teaming.config import Config
-from red_teaming.config import Config
-from red_teaming.config import Config
 from red_teaming.config import Config
 
 
