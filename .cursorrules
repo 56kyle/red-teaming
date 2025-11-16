@@ -1,0 +1,11 @@
+# Cursor Rules for Red Teaming Project
+
+## AI-Generated Documentation Location
+
+All AI-generated documentation files should be placed in the `.cursor/sloptext/` directory. This includes:
+- Formal writeups and technical specifications
+- AI-generated summaries and analyses
+- Generated documentation that is not part of the core project documentation
+
+The `.cursor/sloptext/` directory serves as a designated location for AI-generated content to keep it separate from manually curated project documentation.
+

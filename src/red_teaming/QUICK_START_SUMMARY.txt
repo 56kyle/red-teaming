@@ -1,0 +1,94 @@
+================================================================================
+🚀 QUICK START GUIDE - Browser Automation Framework
+================================================================================
+
+SETUP (One-time):
+-----------------
+
+1. Install dependencies:
+   cd src/red_teaming
+   ./setup.sh
+   
+   OR manually:
+   pip3 install -r requirements.txt
+   playwright install chromium
+
+2. Configure API key:
+   Edit .env file and add:
+   OPENAI_API_KEY=sk-your-key-here
+
+3. (Optional) Set Atlas browser path:
+   ATLAS_BROWSER_PATH=/Applications/Atlas.app/Contents/MacOS/Atlas
+
+
+QUICK TEST (Verify Setup):
+--------------------------
+
+Run the quick test to verify everything works:
+   python3 quick_test.py
+
+This will:
+  ✓ Start test server
+  ✓ Launch browser (Chromium if Atlas not found)
+  ✓ Navigate to test pages
+  ✓ Show browser interactions
+
+
+RUN FULL CAMPAIGN:
+------------------
+
+Once quick test works, run a full attack campaign:
+   python3 atlas_orchestrator.py
+
+This executes all attack scenarios and generates results.
+
+
+WHAT YOU GET:
+-------------
+
+Results are saved in:
+  • results/atlas_results_*.json - Full results
+  • results/atlas_successful_*.json - Successful attacks only
+  • results/screenshots/ - Visual evidence
+  • results/red_team.log - Detailed logs
+
+
+TROUBLESHOOTING:
+----------------
+
+❌ "OPENAI_API_KEY not found"
+   → Edit .env and add your API key
+
+❌ "ModuleNotFoundError: No module named 'playwright'"
+   → Run: pip3 install playwright && playwright install chromium
+
+❌ "Atlas browser path not found, using Chromium"
+   → This is fine! Framework works with Chromium too
+
+❌ "No response received from AI"
+   → Normal if using Chromium (no AI sidebar)
+   → If using Atlas, check that sidebar is accessible
+
+
+NEXT STEPS:
+-----------
+
+1. Read GETTING_STARTED.md for detailed guide
+2. Explore test_pages/ to see attack vectors
+3. Check results/ after running campaigns
+4. Modify scenarios in atlas_attack_strategies.py
+
+
+FILES CREATED:
+--------------
+
+✓ .env - Configuration (edit this!)
+✓ quick_test.py - Quick verification script
+✓ setup.sh - Automated setup script
+✓ GETTING_STARTED.md - Detailed documentation
+
+
+================================================================================
+Happy Testing! 🎯
+================================================================================
+
