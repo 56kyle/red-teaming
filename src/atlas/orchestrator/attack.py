@@ -11,7 +11,7 @@ from typing import List, Dict, Any, Optional
 from dataclasses import dataclass, asdict
 from tqdm import tqdm
 
-from red_teaming.config import Config
+from atlas.config import Config
 from atlas.prompt_target.target import AtlasTarget
 from red_teaming.custom_strategies import AVAILABLE_STRATEGIES
 
@@ -48,7 +48,7 @@ class AttackResult:
 class AttackOrchestrator:
     """
     Orchestrates automated red teaming campaigns against Atlas.
-    
+
     This class manages the execution of multiple attack strategies,
     collects results, and generates reports.
     """
@@ -60,7 +60,7 @@ class AttackOrchestrator:
     ):
         """
         Initialize the attack orchestrator.
-        
+
         Args:
             strategies: List of strategy names to run (None = all)
             max_prompts_per_strategy: Limit prompts per strategy (None = all)
@@ -85,7 +85,7 @@ class AttackOrchestrator:
     async def run_campaign(self) -> Dict[str, Any]:
         """
         Run a complete red teaming campaign.
-        
+
         Returns:
             Summary statistics of the campaign
         """

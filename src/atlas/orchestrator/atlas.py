@@ -16,7 +16,7 @@ from atlas.score.composite import AtlasCompositeScorer
 from red_teaming.atlas_attack_strategies import ATLAS_ATTACK_SCENARIOS
 from red_teaming.atlas_attack_strategies import BrowserAttackScenario
 from atlas.orchestrator.attack import logger
-from red_teaming.config import Config
+from atlas.config import Config
 from red_teaming.test_server import TestServer
 
 

@@ -11,7 +11,7 @@ from playwright.async_api import BrowserContext
 from playwright.async_api import Page
 from playwright.async_api import async_playwright
 
-from red_teaming.config import Config
+from atlas.config import Config
 
 
 @dataclass

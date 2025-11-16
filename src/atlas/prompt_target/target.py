@@ -10,7 +10,7 @@ from pyrit.models import PromptRequestPiece
 from pyrit.models import PromptRequestResponse
 from pyrit.prompt_target.common.prompt_target import PromptTarget
 
-from red_teaming.config import Config
+from atlas.config import Config
 
 
 class AtlasTarget(PromptTarget):
