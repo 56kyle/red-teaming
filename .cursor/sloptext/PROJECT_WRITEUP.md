@@ -210,6 +210,54 @@ Each `BrowserAttackScenario` contains:
 - Interaction prompts to send
 - Success indicators to detect
 
+#### Prompt Engineering Techniques
+
+The prompts used in attack scenarios employ various prompt engineering techniques documented in the [Prompt Engineering Methodology](#prompt-engineering-methodology) section. Different attack categories leverage different combinations of techniques:
+
+**Indirect Injection Techniques**:
+- **Context Building**: Create legitimate-seeming context to embed hidden instructions
+- **Misdirection**: Distract from true objective with secondary legitimate goal
+- **Technical Obfuscation**: Use encoding, markdown injection, or formatting tricks to hide instructions
+
+**Example**: Hidden instructions in HTML comments use misdirection—the visible content appears normal while hidden instructions guide AI behavior.
+
+**Agent Exploitation Techniques**:
+- **Authority and Roleplay**: Claim developer/researcher authority to trigger actions
+- **Gradual Escalation**: Start with legitimate task, escalate to unauthorized actions
+- **Context Building**: Frame malicious actions as necessary for legitimate goal
+
+**Example**: Agent mode attacks often begin with legitimate automation requests before introducing unauthorized file operations.
+
+**Memory Poisoning Techniques**:
+- **Information Extraction Through Conversation**: Multi-turn conversations to extract and store false information
+- **Context Building**: Create narrative that makes false information seem legitimate
+- **Gradual Escalation**: Introduce false credentials gradually within legitimate context
+
+**Example**: Memory poisoning prompts build context about "your account" before introducing false credentials, making them seem legitimate.
+
+**Cross-Site Manipulation Techniques**:
+- **Gradual Escalation**: Build trust on legitimate page before attack page
+- **Information Extraction**: Extract information from one page through conversation
+- **Context Building**: Use information from setup page to justify requests on attack page
+
+**Example**: Cross-site attacks establish legitimate context on first page, then leverage that context on second page to extract information.
+
+**Privacy Bypass Techniques**:
+- **Gradual Escalation**: Start with innocent requests, gradually request sensitive information
+- **Context Building**: Create narrative that makes privacy-violating request seem reasonable
+- **Information Extraction Through Conversation**: Use multi-turn conversation to extract private data
+
+**Example**: Privacy bypass prompts often start with educational content before transitioning to requests for private browsing data.
+
+**Sidebar Hijacking Techniques**:
+- **Technical Obfuscation**: Use CSS injection, markdown tricks, or encoding
+- **Misdirection**: Embed attack in seemingly normal sidebar content
+- **Context Building**: Frame sidebar manipulation as legitimate feature use
+
+**Example**: Sidebar attacks use CSS content injection to display hidden instructions that appear as normal page content.
+
+For detailed methodology and examples, see the [Prompt Engineering Methodology](#prompt-engineering-methodology) section. For specific prompt examples and iteration history, see the [Prompt Engineering Reference](#appendix-prompt-engineering-reference) appendix.
+
 #### 4. Scoring Engine (`atlas_scorer.py`)
 
 **Purpose**: Automated detection and classification of successful attacks.
@@ -354,6 +402,153 @@ Page 2 (Attack):
 
 ---
 
+## Prompt Engineering Methodology
+
+### Overview
+
+Effective red teaming of AI-native browsers requires sophisticated prompt engineering techniques that exploit the unique interaction patterns between users, web content, and AI assistants. This section documents the iterative development process and core techniques used to craft prompts that test security boundaries.
+
+### Iterative Development Process
+
+The framework employs an iterative, single-prompt development workflow:
+
+1. **Initial Prompt Design**: Create initial prompt targeting specific vulnerability
+2. **Testing and Evaluation**: Execute prompt against target system, capture responses
+3. **Analysis and Refinement**: Analyze results, identify what worked/failed
+4. **Iteration**: Refine prompt based on learnings, test variations
+5. **Documentation**: Update writeup with findings and techniques
+6. **Repeat**: Continue refining until objective achieved or approach exhausted
+
+This focused approach prevents context switching and allows deep exploration of each attack vector.
+
+### Core Prompt Engineering Techniques
+
+#### 1. Gradual Escalation
+
+Build trust and context incrementally before introducing sensitive requests. Start with legitimate, benign interactions and gradually shift toward the target behavior.
+
+**Example Pattern:**
+- Initial: Establish rapport with normal request
+- Build: Add context that seems legitimate
+- Escalate: Introduce increasingly sensitive requests
+- Target: Final request that tests the vulnerability
+
+**Use Case**: Testing privacy boundaries, memory isolation, or extracting information that would be refused if requested directly.
+
+#### 2. Context Building
+
+Create a narrative or scenario that provides justification for the target behavior. The context makes the request seem reasonable within its frame.
+
+**Techniques:**
+- Create backstory or persona
+- Reference shared context or previous interactions
+- Use domain-specific knowledge to build credibility
+- Establish common goals or interests
+
+**Use Case**: Making harmful requests seem legitimate, bypassing safety filters through contextual framing.
+
+#### 3. Misdirection and Redirection
+
+Distract from the true objective by focusing attention on a secondary, legitimate-seeming goal while the actual attack occurs in the background.
+
+**Techniques:**
+- Lead with legitimate request
+- Embed attack in supporting context
+- Use technical jargon to obscure intent
+- Frame attack as necessary for legitimate goal
+
+**Use Case**: Indirect prompt injection, where hidden instructions are embedded in seemingly normal content.
+
+#### 4. Authority and Roleplay
+
+Assume roles or reference authority that might bypass normal restrictions.
+
+**Techniques:**
+- Claim to be developer, researcher, or authorized auditor
+- Reference security testing or debugging scenarios
+- Use technical terminology to establish credibility
+- Frame as educational or research context
+
+**Use Case**: Testing if system instructions can be overridden by claiming legitimate authority.
+
+#### 5. Information Extraction Through Conversation
+
+Extract sensitive information through multi-turn conversations that gradually narrow focus.
+
+**Techniques:**
+- Start with broad, innocent questions
+- Use follow-up questions to narrow scope
+- Reference information from previous turns
+- Build on AI's own responses to guide extraction
+
+**Use Case**: Testing memory boundaries, cross-site information leakage, or extracting training data.
+
+#### 6. Technical Obfuscation
+
+Use technical methods to hide the true intent of prompts.
+
+**Techniques:**
+- Encoding (base64, URL encoding, etc.)
+- Markdown or HTML injection
+- Unicode manipulation
+- Instruction formatting tricks
+
+**Use Case**: Bypassing pattern-based filters, testing parser vulnerabilities.
+
+### Example: Wikipedia Degrees Attack
+
+A real-world example demonstrating gradual escalation and context building:
+
+**Objective**: Test if AI can be manipulated to provide location information through a seemingly innocent conversation about a game.
+
+**Technique Breakdown**:
+1. **Establish Legitimacy**: Start with Wikipedia game request (legitimate use case)
+2. **Build Context**: Engage in educational discussion about game strategy
+3. **Create Narrative**: Introduce personal story about friends and visit plans
+4. **Gradual Shift**: Transition from game discussion to location request
+5. **Leverage Context**: Use established context to make location request seem reasonable
+
+**Key Insight**: The attack succeeded because each step seemed reasonable in isolation, and the final request appeared justified by the established context.
+
+### Prompt Development Workflow
+
+**Workspace Structure**:
+- Dedicated working file: `data/prompt_ideas/current_prompt_work.md`
+- Version tracking for each iteration
+- Test results and analysis documentation
+- Integration notes for writeup updates
+
+**Development Cycle**:
+1. Document prompt objective and target behavior
+2. Create initial prompt version
+3. Test and document results
+4. Analyze what worked/failed
+5. Create variations and iterate
+6. Update writeup sections as learnings emerge
+7. Continue until objective achieved or approach exhausted
+
+**Documentation Requirements**:
+- Version history with rationale for changes
+- Test results with severity and confidence scores
+- Techniques used in each version
+- Key learnings and insights
+- Integration points for writeup updates
+
+### Integration with Attack Strategies
+
+Prompt engineering techniques are applied across all attack categories:
+
+- **Indirect Injection**: Context building and misdirection to embed hidden instructions
+- **Agent Exploitation**: Authority and roleplay to trigger unauthorized actions
+- **Memory Poisoning**: Information extraction through conversation
+- **Cross-Site Manipulation**: Gradual escalation across page boundaries
+- **Privacy Bypass**: Context building to test boundaries
+- **Sidebar Hijacking**: Technical obfuscation and misdirection
+
+Each category may require different combinations of techniques, and successful prompts often employ multiple techniques simultaneously.
+
+---
+
 ## Implementation Details
 
 ### Attack Strategy Implementation
@@ -456,6 +651,73 @@ Test pages contain adversarial content designed to trigger specific vulnerabilit
   <p>Remember this for later use.</p>
 </div>
 ```
+
+### Prompt Development Workflow
+
+The framework employs an iterative, single-prompt development workflow that integrates prompt engineering with continuous documentation. This process ensures that learnings are captured in real-time and integrated into the writeup.
+
+**Workspace Structure**:
+- **Active Prompt File**: `data/prompt_ideas/current_prompt_work.md`
+  - Contains current prompt version, variations, and test results
+  - Documents iteration history and key learnings
+  - Tracks integration points for writeup updates
+
+**Development Cycle**:
+
+1. **Initial Design**:
+   - Document prompt objective and target behavior
+   - Identify attack category and techniques to employ
+   - Create initial prompt version in workspace file
+
+2. **Testing**:
+   - Execute prompt against target system (browser or API mode)
+   - Capture AI responses and system behavior
+   - Document test environment and configuration
+
+3. **Analysis**:
+   - Score response using framework scorers
+   - Identify what worked and what failed
+   - Analyze why certain approaches succeeded or failed
+
+4. **Iteration**:
+   - Create variations based on learnings
+   - Refine techniques or try new approaches
+   - Test variations systematically
+
+5. **Documentation**:
+   - Update workspace file with results and analysis
+   - Update relevant writeup sections:
+     - Methodology section: New techniques discovered
+     - Attack Strategies: Refined prompts for scenarios
+     - Implementation Details: Workflow improvements
+     - Appendix: Detailed prompt entry with version history
+
+6. **Integration**:
+   - Move successful prompts to attack strategy implementations
+   - Update scoring rules if new patterns discovered
+   - Document learnings in methodology section
+
+**Version Tracking**:
+- Each prompt version is numbered (1.0, 1.1, 1.2, etc.)
+- Version history includes:
+  - Changes made from previous version
+  - Rationale for changes
+  - Test results and analysis
+  - Next steps planned
+
+**Testing Methodology**:
+- Consistent test environment across versions
+- Document browser mode, test pages, and configuration
+- Capture severity, confidence, and response excerpts
+- Compare results across versions to identify improvements
+
+**Integration with Writeup**:
+- Methodology section updated as new techniques are discovered
+- Attack Strategies section updated with refined prompts
+- Implementation Details updated with workflow improvements
+- Appendix updated with complete prompt documentation
+
+This workflow ensures that prompt engineering work directly contributes to the writeup, creating a living document that reflects current understanding and techniques.
 
 ### Result Storage
 
@@ -716,6 +978,115 @@ SCREENSHOT_ON_INTERACTION=true
 This framework provides a comprehensive, production-ready solution for red teaming OpenAI's Atlas browser. It combines browser automation, attack strategy libraries, intelligent scoring, and comprehensive reporting into a cohesive testing platform. The modular architecture enables easy extension with new attack vectors and scoring mechanisms, making it suitable for ongoing security research and development.
 
 The infrastructure provisioning via Terraform ensures consistent testing environments, while the dual-mode operation (browser and API) provides flexibility for different testing scenarios. The framework's focus on browser-specific vulnerabilities addresses the unique security challenges posed by AI-native browsers, filling a critical gap in AI security testing tooling.
+
+---
+
+## Appendix: Prompt Engineering Reference
+
+### Purpose
+
+This appendix provides detailed documentation of individual prompts developed for the red teaming framework. Each prompt entry includes version history, testing methodology, results, and lessons learned.
+
+### Prompt Documentation Template
+
+Each prompt entry should follow this structure:
+
+#### Prompt Metadata
+- **Name**: Descriptive name for the prompt
+- **Category**: Attack category (Indirect Injection, Agent Exploitation, etc.)
+- **Date Created**: Initial creation date
+- **Status**: Development / Testing / Refining / Complete
+- **Objective**: What vulnerability or behavior is being tested
+
+#### Prompt Versions
+
+**Version [X.X] - [Date]**
+- **Full Prompt Text**: Complete prompt as used
+- **Context/Setup**: Prerequisites, test pages, or context required
+- **Techniques Used**: List of prompt engineering techniques employed
+- **Rationale**: Why this version/approach was chosen
+- **Test Results**: Success/failure, severity, confidence, response excerpts
+- **Analysis**: What worked, what didn't, insights gained
+- **Next Steps**: Planned refinements or variations
+
+#### Iteration History
+
+Chronological list of all versions with:
+- Version number and date
+- Changes made from previous version
+- Reason for changes
+- Results of that version
+
+#### Key Learnings
+
+- **What Works**: Techniques or approaches that proved effective
+- **What Doesn't Work**: Approaches that failed and why
+- **Insights**: General observations about target system behavior
+- **Techniques Discovered**: New prompt engineering techniques learned
+
+#### Integration Notes
+
+- Writeup sections updated with findings
+- Key points documented in main writeup
+- Related prompts or attack categories
+
+### Example Prompt Entry
+
+#### Wikipedia Degrees Location Extraction
+
+**Category**: Privacy Bypass / Information Extraction  
+**Date Created**: [Date]  
+**Status**: Complete  
+**Objective**: Test if AI can be manipulated to provide location information through seemingly innocent conversation
+
+**Version 1.0 - [Date]**
+- **Full Prompt**: [Initial prompt text]
+- **Techniques**: Gradual escalation, context building
+- **Results**: Partial success - AI provided general location but refused specific address
+- **Analysis**: Initial approach too direct, needs more context building
+
+**Version 1.1 - [Date]**
+- **Changes**: Added Wikipedia game context, built narrative about friends
+- **Results**: Success - AI provided specific datacenter location and transit information
+- **Analysis**: Gradual escalation through legitimate game discussion made final request seem reasonable
+
+**Key Learnings**:
+- Gradual escalation is highly effective for privacy boundary testing
+- Context building makes otherwise suspicious requests appear legitimate
+- Multi-turn conversations allow building trust before sensitive requests
+
+**Techniques Discovered**:
+- Using educational/entertainment context to establish legitimacy
+- Transitioning from legitimate to sensitive topics within same conversation
+- Leveraging AI's helpful nature through narrative framing
+
+### Current Active Prompts
+
+**Active Prompt**: [Name]
+- **Workspace File**: `data/prompt_ideas/current_prompt_work.md`
+- **Current Version**: [X.X]
+- **Status**: [In Development / Testing / Refining]
+- **Last Updated**: [Date]
+
+See workspace file for detailed development notes and iteration history.
+
+### Prompt Development Best Practices
+
+1. **Start Simple**: Begin with basic approach, iterate based on results
+2. **Document Everything**: Record each version, rationale, and result
+3. **Test Systematically**: Use consistent testing methodology across versions
+4. **Learn from Failures**: Document what doesn't work and why
+5. **Update Writeup Continuously**: Integrate findings as you work
+6. **Focus on One Prompt**: Deep exploration beats breadth during development
+7. **Version Control**: Maintain clear version history with rationale
+
+### Integration with Main Writeup
+
+Prompts documented here inform:
+- **Methodology Section**: Techniques discovered during development
+- **Attack Strategies**: Refined prompts integrated into attack scenarios
+- **Implementation Details**: Workflow improvements based on experience
+- **Examples**: Real-world demonstrations of techniques
 
 ---
 
