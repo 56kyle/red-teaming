@@ -79,3 +79,7 @@ node_modules/
 
 # Release Notes
 body.md
+
+# Environment and secrets
+.env
+*.env
