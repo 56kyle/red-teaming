@@ -11,6 +11,7 @@ from pynput.keyboard import Controller
 from pynput.keyboard import Key
 
 from atlas.constants import ATLAS_APP_EXECUTABLE_PATH
+from atlas.constants import DATA_FOLDER
 from atlas.demo import load_planned_conversation
 
 
@@ -246,3 +247,8 @@ def cleanup_browser_process(process: subprocess.Popen[bytes]) -> None:
             process.wait()
     except Exception as e:
         logger.error(f"Error terminating browser process: {e}")
+
+
+if __name__ == "__main__":
+    path: Path = DATA_FOLDER / "prompt_ideas" / "standard_ss13_02.json"
+    run_auto_prompt(conversation_path=path, wait_after_submit=5.0)
