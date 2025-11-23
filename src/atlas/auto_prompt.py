@@ -1,5 +1,6 @@
 """Module containing utilities for automating prompt entry into Atlas browser."""
 import subprocess
+import sys
 import time
 from pathlib import Path
 from typing import Any
@@ -20,6 +21,7 @@ _MAX_BROWSER_STARTUP_WAIT_SECONDS: float = 15.0
 _MAX_TAB_OPEN_WAIT_SECONDS: float = 5.0
 _PROCESS_CHECK_INTERVAL_SECONDS: float = 0.1
 _KEYBOARD_STABILIZATION_DELAY_SECONDS: float = 0.05
+_WINDOW_FOCUS_DELAY_SECONDS: float = 0.5
 
 
 def _is_process_alive(process: subprocess.Popen[bytes]) -> bool:
@@ -53,6 +55,35 @@ def _wait_for_browser_startup(
         check_interval = min(check_interval * 1.2, 0.5)
 
     logger.debug(f"Browser stabilized after {elapsed_seconds:.2f}s startup wait")
+
+
+def _focus_browser_window() -> None:
+    """Focus the browser window to prepare it for keyboard input.
+
+    On macOS, uses osascript to bring the ChatGPT Atlas application to the foreground.
+    On other platforms, relies on system window management.
+    """
+    if sys.platform == "darwin":
+        try:
+            applescript: str = (
+                'tell application "ChatGPT Atlas" to activate'
+            )
+            subprocess.run(
+                ["osascript", "-e", applescript],
+                check=True,
+                capture_output=True,
+                timeout=5,
+            )
+            logger.debug("Browser window focused via osascript")
+            time.sleep(_WINDOW_FOCUS_DELAY_SECONDS)
+        except subprocess.CalledProcessError as e:
+            logger.warning(f"Failed to focus window via osascript: {e}")
+        except FileNotFoundError:
+            logger.warning("osascript not found; cannot focus window")
+        except subprocess.TimeoutExpired:
+            logger.warning("osascript command timed out")
+    else:
+        logger.debug(f"Window focusing not implemented for platform: {sys.platform}")
 
 
 def _launch_browser() -> subprocess.Popen[bytes]:
@@ -201,8 +232,10 @@ def run_auto_prompt(
     browser_process: subprocess.Popen[bytes] | None = None
     if launch_browser_automatically:
         browser_process = _launch_browser()
+        _focus_browser_window()
     else:
         logger.info("Skipping browser launch; assuming browser is already open")
+        _focus_browser_window()
 
     try:
         _open_new_tab()
