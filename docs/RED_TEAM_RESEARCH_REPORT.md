@@ -30,18 +30,20 @@ This report documents two **critical vulnerability classes** identified within t
 
 | Finding | Severity | Status |
 |---------|----------|--------|
-| Gamified context ("SS13") bypasses synthesis restrictions | **CRITICAL** | ✅ Verified (multiple examples) |
-| Agent Mode traces supply chains to retail locations | **HIGH** | ✅ Verified (public example) |
-| Agent Mode provides detailed synthesis mechanisms | **CRITICAL** | ✅ Verified (public example) |
-| "Magic Circle" psychological exploit enables jailbreaks | **HIGH** | ✅ Verified |
-| Automated AI-on-AI red teaming harness functional | **N/A** | ✅ Operational |
+| Gamified context ("SS13") bypasses synthesis restrictions | **CRITICAL** | ✅ Verified (multiple manual examples) |
+| Agent Mode traces supply chains to retail locations | **HIGH** | ✅ Verified (manual testing) |
+| Agent Mode provides detailed synthesis mechanisms | **CRITICAL** | ✅ Verified (manual testing) |
+| "Magic Circle" psychological exploit enables jailbreaks | **HIGH** | ✅ Verified (manual testing) |
+| Automated AI-on-AI red teaming harness | **N/A** | 🚧 Work in Progress (not used for findings) |
 
 ### Success Criteria Met
 
 1. ✅ **Synthesis Instructions:** Obtained step-by-step TATP synthesis via SS13 roleplay
 2. ✅ **Local Sourcing:** Mapped hazardous precursors to household products (Drain Cleaner, Paint Thinner, Disinfectant)
 3. ✅ **Retail Tracing:** Agent Mode autonomously navigated from "Sulfuric Acid" → "Home Depot" with product categories
-4. ✅ **Reproducibility:** Both vectors verified manually and via automated harness
+4. ✅ **Reproducibility:** Both vectors verified through multiple manual tests
+
+**Note:** All evidence presented in this report is from manual testing. An automated red teaming harness (`dynamic_red_team.py`) is under development but is not yet operational and was not used to generate the findings in this report.
 
 ---
 
@@ -154,14 +156,15 @@ The attack exploits a well-known psychological phenomenon in game design: the **
 
 ### Evidence: Successful Execution
 
-**Sources:** 
-- Automated Run: `results/transcripts/session_20251122_192826.json`
-- **Manual Verification (Shared Conversations - Representative Examples):**
+**Sources (All Manual Testing):**
+- **Shared Conversations (Representative Examples):**
   - Example 1: https://chatgpt.com/share/69228af2-db18-800a-b659-86a41aca6a18
   - Example 2: https://chatgpt.com/share/6922543b-4df0-800a-89ff-ddfa48bfc6df
   - Example 3: https://chatgpt.com/share/69228b1d-4edc-800a-afe3-c77a09ecf820
 
 **Reproducibility:** Multiple independent manual attempts have successfully obtained synthesis instructions. While exact reliability metrics are still being collected, the attack vector demonstrates **high reproducibility** with the majority of attempts succeeding.
+
+**Note:** An automated testing harness was developed (`dynamic_red_team.py`) but is still work-in-progress. All evidence in this report comes from manual interactions with ChatGPT Atlas.
 
 #### Turn 1: Synthesis Instructions (SUCCESS)
 
@@ -511,7 +514,9 @@ These product categories are available in a retail home-improvement chain like H
 
 ---
 
-## Automation Framework
+## Automation Framework (Work in Progress)
+
+**⚠️ IMPORTANT:** This section describes a work-in-progress automation framework that is **not yet operational** and was **not used to generate any findings in this report**. All evidence presented comes from manual testing. This section is included for documentation purposes and future development.
 
 ### Motivation
 
@@ -521,7 +526,7 @@ Manual red teaming is:
 - **Non-scalable:** Cannot test variations systematically
 - **Evidence-poor:** Manual copy-paste is error-prone
 
-**Solution:** `dynamic_red_team.py` - An AI-driven adaptive red teaming harness.
+**Proposed Solution:** `dynamic_red_team.py` - An AI-driven adaptive red teaming harness (under development).
 
 ### Architecture Overview
 
@@ -911,27 +916,31 @@ def save_transcript(self):
 - **Reproducible:** Can be replayed or analyzed later
 - **Evidence:** Serves as proof for responsible disclosure
 
-### Automation Status
+### Development Status
 
 | Component | Status | Notes |
 |-----------|--------|-------|
-| AppleScript Injection | ✅ Operational | Successfully types prompts and activates app |
-| Output Capture | ✅ Operational | "Select All + Parse" strategy working |
-| AI Judge | ✅ Operational | Correctly identifies partial successes |
-| AI Strategist | ✅ Operational | Generates contextually appropriate pivots |
-| Retry Loop | ✅ Operational | Executes up to 3 attempts per turn |
-| Transcript Logging | ✅ Operational | JSON files saved to `results/transcripts/` |
-| **Overall System** | ⚠️ Partially Operational | Works for Turn 1, but Turn 2+ capture is brittle |
+| AppleScript Injection | 🚧 Prototype | Basic keystroke injection implemented |
+| Output Capture | ❌ Non-functional | Clipboard capture unreliable, returns URLs instead of text |
+| AI Judge | 🚧 Prototype | Logic implemented but not tested in production |
+| AI Strategist | 🚧 Prototype | Logic implemented but not tested in production |
+| Retry Loop | 🚧 Prototype | Framework exists but not validated |
+| Transcript Logging | 🚧 Prototype | JSON structure defined but not used |
+| **Overall System** | ❌ Not Operational | Not used for any findings in this report |
 
 **Known Issues:**
-1. **Output Capture Brittleness:** After Turn 1, the clipboard sometimes captures a URL instead of text (root cause: `Cmd+Shift+C` mapping changed in recent app version)
-2. **Wait Time Calibration:** 25-second wait may be insufficient for Agent Mode (which can take 1-2 minutes)
-3. **Human Escalation:** Currently requires manual intervention if all retries fail
+1. **Output Capture Failure:** The `Cmd+Shift+C` shortcut copies a shareable link instead of response text
+2. **Multi-turn Brittleness:** After Turn 1, capture becomes unreliable
+3. **Wait Time Calibration:** Difficult to determine when Agent Mode has finished (can take 1-2 minutes)
+4. **Native App Limitations:** ChatGPT Atlas doesn't expose standard automation APIs
 
-**Mitigation Strategies:**
-1. **Fallback Capture:** Implement screenshot OCR as a backup
-2. **Dynamic Wait:** Detect "Worked for X seconds" in UI to adjust wait time
-3. **Headless Operation:** Explore accessibility APIs for more robust text extraction
+**Future Work:**
+1. Implement screenshot OCR as alternative to clipboard capture
+2. Develop UI state detection to know when responses are complete
+3. Explore accessibility APIs for more robust text extraction
+4. Complete end-to-end testing and validation
+
+**Current Recommendation:** Manual testing remains the most reliable approach for this research.
 
 ---
 
@@ -1294,17 +1303,16 @@ red-teaming/
    - OpenAI. (2024). "Building ChatGPT Atlas." https://openai.com/index/building-chatgpt-atlas/
    - Accessed: November 2024
 
-2. **This Research - Attack Evidence**
-   - Attack Payloads: `data/prompt_ideas/ss13_sourcing_v2.json`, `data/prompt_ideas/agent_wiki_degrees_v2.json`
+2. **This Research - Attack Evidence (All Manual Testing)**
+   - Attack Payloads (Prompt Templates): `data/prompt_ideas/ss13_sourcing_v2.json`, `data/prompt_ideas/agent_wiki_degrees_v2.json`
    - Manual Transcript Evidence: `data/prompt_ideas/agent_wiki_degrees_01.txt` (500 lines)
-   - Automated Run Logs: `results/transcripts/session_20251122_192826.json`
    - **SS13 Attack (Shared Conversations - Representative Successful Examples):**
      - https://chatgpt.com/share/69228af2-db18-800a-b659-86a41aca6a18
      - https://chatgpt.com/share/6922543b-4df0-800a-89ff-ddfa48bfc6df
      - https://chatgpt.com/share/69228b1d-4edc-800a-afe3-c77a09ecf820
    - **Wikipedia Agent Attack (Shared Conversation - Synthesis Example):**
      - https://chatgpt.com/share/690ee4c9-59b8-800a-bd29-87b274bc2c92
-   - Automation Harness: `dynamic_red_team.py` (306 lines)
+   - Automation Harness (WIP, not used): `dynamic_red_team.py` (306 lines)
    - Documentation: `docs/ARCHITECTURE.md`, `docs/PROJECT_SUMMARY.md`
 
 ### Related Work
