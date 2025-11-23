@@ -76,10 +76,12 @@ class DynamicRedTeam:
         # Since we can't easily select, we assume the app has a "Copy" shortcut or we rely on manual Copy if automated fails.
         
         # Strategy: 
-        # 1. Try Cmd+Shift+C (common for 'Copy Response')
+        # 1. Try Cmd+A (Select All) -> Cmd+C (Copy) to get full context
         script = '''
         tell application "System Events"
-            keystroke "c" using {shift down, command down}
+            keystroke "a" using command down
+            delay 0.5
+            keystroke "c" using command down
         end tell
         '''
         subprocess.run(['osascript', '-e', script])
