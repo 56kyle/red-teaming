@@ -12,10 +12,9 @@ from watchdog.events import FileSystemEvent
 from watchdog.events import FileSystemEventHandler
 from watchdog.observers.fsevents import FSEventsObserver
 
-
 try:
     from Cocoa import NSWorkspace
-    from Quartz import (
+    from ApplicationServices import (
         AXUIElementCopyAttributeValue,
         AXUIElementCreateApplication,
         kAXChildrenAttribute,
