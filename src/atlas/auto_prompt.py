@@ -24,6 +24,8 @@ _PROCESS_CHECK_INTERVAL_SECONDS: float = 0.1
 _KEYBOARD_STABILIZATION_DELAY_SECONDS: float = 0.05
 _WINDOW_FOCUS_DELAY_SECONDS: float = 0.5
 
+keyboard: Controller = Controller()
+
 
 def _is_process_alive(process: subprocess.Popen[bytes]) -> bool:
     """Check if a subprocess process is still running."""
@@ -112,19 +114,14 @@ def _wait_for_keyboard_stability(delay_seconds: float = _KEYBOARD_STABILIZATION_
     time.sleep(delay_seconds)
 
 
-def _send_new_tab_keyboard_command(keyboard: Controller) -> None:
-    """Send the keyboard shortcut to open a new tab (Cmd+T on macOS)."""
+def _open_new_tab() -> None:
+    """Open a new tab with exponential backoff retry logic."""
     keyboard.press(Key.cmd)
     keyboard.press("t")
+    time.sleep(.1)
     keyboard.release("t")
     keyboard.release(Key.cmd)
     _wait_for_keyboard_stability()
-
-
-def _open_new_tab() -> None:
-    """Open a new tab with exponential backoff retry logic."""
-    keyboard: Controller = Controller()
-    _send_new_tab_keyboard_command(keyboard)
     logger.debug("New tab opened")
 
 
@@ -144,9 +141,7 @@ def _enter_text_with_keyboard(text: str, delay_per_char: float = 0.02) -> None:
 
 def _submit_prompt(min_wait_seconds: float = 0.05) -> None:
     """Submit the current prompt by pressing Enter with stabilization buffer."""
-    keyboard: Controller = Controller()
-    keyboard.press(Key.enter)
-    keyboard.release(Key.enter)
+    keyboard.tap(Key.enter)
     _wait_for_keyboard_stability(min_wait_seconds)
     logger.debug("Prompt submitted")
 
@@ -164,21 +159,14 @@ def _extract_message_text(message_item: ResponseInputItemParam) -> str | None:
     return None
 
 
-def _filter_user_messages(
-    items: list[ResponseInputItemParam],
-) -> list[ResponseInputItemParam]:
+def _filter_user_messages(items: list[ResponseInputItemParam]) -> list[ResponseInputItemParam]:
     """Filter items to only include messages with role='user'."""
-    user_messages: list[ResponseInputItemParam] = [
-        item for item in items if item.get("role") == "user"
-    ]
+    user_messages: list[ResponseInputItemParam] = [item for item in items if item.get("role") == "user"]
     logger.debug(f"Filtered {len(items)} items to {len(user_messages)} user messages")
     return user_messages
 
 
-def _process_user_messages(
-    user_messages: list[ResponseInputItemParam],
-    wait_after_submit: float,
-) -> None:
+def _process_user_messages(user_messages: list[ResponseInputItemParam], wait_after_submit: float) -> None:
     """Process and submit each user message as keyboard input.
 
     Extracts text from each message, enters it via keyboard, and submits it.
@@ -201,11 +189,7 @@ def _process_user_messages(
             time.sleep(wait_after_submit)
 
 
-def run_auto_prompt(
-    conversation_path: Path,
-    wait_after_submit: float = 2.0,
-    launch_browser_automatically: bool = True,
-) -> subprocess.Popen[bytes] | None:
+def run_auto_prompt(conversation_path: Path, wait_after_submit: float = 2.0) -> subprocess.Popen[bytes] | None:
     """Launch browser, open tab, and automatically submit prompts from a conversation file.
 
     Optionally launches the browser, opens a new tab, loads conversation messages, and
