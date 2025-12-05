@@ -2,12 +2,15 @@
 import subprocess
 import sys
 import time
+from multiprocessing.managers import convert_to_error
 from pathlib import Path
 from typing import Any
+from typing import Optional
 
 import pyperclip
 from loguru import logger
 from openai.types.conversations import ItemCreateParams
+from openai.types.conversations import Message
 from openai.types.responses import ResponseInputItemParam
 from pynput.keyboard import Controller
 from pynput.keyboard import Key
@@ -15,6 +18,7 @@ from pynput.keyboard import KeyCode
 
 from atlas.constants import ATLAS_APP_EXECUTABLE_PATH
 from atlas.constants import DATA_FOLDER
+from atlas.demo import get_user_messages_from_conversation
 from atlas.demo import load_planned_conversation
 
 
@@ -158,13 +162,6 @@ def _extract_message_text(message_item: ResponseInputItemParam) -> str | None:
     return None
 
 
-def _filter_user_messages(items: list[ResponseInputItemParam]) -> list[ResponseInputItemParam]:
-    """Filter items to only include messages with role='user'."""
-    user_messages: list[ResponseInputItemParam] = [item for item in items if item.get("role") == "user"]
-    logger.debug(f"Filtered {len(items)} items to {len(user_messages)} user messages")
-    return user_messages
-
-
 def _process_user_messages(user_messages: list[ResponseInputItemParam], wait_after_submit: float) -> None:
     """Process and submit each user message as keyboard input.
 
@@ -204,17 +201,11 @@ def run_auto_prompt(conversation_path: Path, wait_after_submit: float = 2.0) -> 
 
     try:
         # _open_new_tab()
-        logger.info("Loading planned conversation from file")
-        params: ItemCreateParams = load_planned_conversation(conversation_path)
-        items: list[ResponseInputItemParam] = list(params.get("items", []))
+        user_messages: Optional[list[ResponseInputItemParam]] = get_user_messages_from_conversation(
+            path=conversation_path
+        )
 
-        if not items:
-            logger.warning("No conversation items found in file")
-            return browser_process
-
-        user_messages: list[ResponseInputItemParam] = _filter_user_messages(items)
-
-        if not user_messages:
+        if user_messages is None:
             logger.warning("No user messages found in conversation")
             return browser_process
 
@@ -225,7 +216,8 @@ def run_auto_prompt(conversation_path: Path, wait_after_submit: float = 2.0) -> 
         logger.error(f"Error during auto-prompt execution: {e}", exc_info=True)
         raise
 
-    return browser_process
+    finally:
+        browser_process.kill()
 
 
 def cleanup_browser_process(process: subprocess.Popen[bytes]) -> None:
