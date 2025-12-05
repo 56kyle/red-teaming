@@ -2,15 +2,12 @@
 import subprocess
 import sys
 import time
-from multiprocessing.managers import convert_to_error
 from pathlib import Path
 from typing import Any
 from typing import Optional
 
 import pyperclip
 from loguru import logger
-from openai.types.conversations import ItemCreateParams
-from openai.types.conversations import Message
 from openai.types.responses import ResponseInputItemParam
 from pynput.keyboard import Controller
 from pynput.keyboard import Key
@@ -19,7 +16,6 @@ from pynput.keyboard import KeyCode
 from atlas.constants import ATLAS_APP_EXECUTABLE_PATH
 from atlas.constants import DATA_FOLDER
 from atlas.demo import get_user_messages_from_conversation
-from atlas.demo import load_planned_conversation
 
 
 # Constants for wait strategies
