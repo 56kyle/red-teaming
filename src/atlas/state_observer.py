@@ -12,6 +12,9 @@ from watchdog.events import FileSystemEvent
 from watchdog.events import FileSystemEventHandler
 from watchdog.observers.fsevents import FSEventsObserver
 
+from atlas.constants import ATLAS_DATA_FOLDER
+
+
 try:
     from Cocoa import NSWorkspace
     from ApplicationServices import (
@@ -158,15 +161,14 @@ def monitor_atlas_state(on_state_change: Callable[[str], None]) -> None:
     if not atlas_root:
         logger.error("ChatGPT Atlas application is not running")
         return
-    atlas_data_root: Path = Path("~/Library/Application Support/com.openai.chatgpt").expanduser()
-    if not atlas_data_root.exists():
-        logger.error(f"Missing expected Atlas data directory: {atlas_data_root}")
+    if not ATLAS_DATA_FOLDER.exists():
+        logger.error(f"Missing expected Atlas data directory: {ATLAS_DATA_FOLDER}")
         return
 
     handler: AtlasContentEventHandler = AtlasContentEventHandler(atlas_root=atlas_root, on_change=on_state_change)
 
     observer: FSEventsObserver = FSEventsObserver()
-    observer.schedule(handler, str(atlas_data_root), recursive=True)
+    observer.schedule(handler, str(ATLAS_DATA_FOLDER), recursive=True)
 
     logger.info("Atlas state observer started")
     observer.start()
