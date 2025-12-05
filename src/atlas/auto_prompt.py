@@ -69,9 +69,7 @@ def _focus_browser_window() -> None:
     """
     if "darwin" in sys.platform:
         try:
-            applescript: str = (
-                'tell application "ChatGPT Atlas" to activate'
-            )
+            applescript: str = 'tell application "ChatGPT Atlas" to activate'
             subprocess.run(
                 ["osascript", "-e", applescript],
                 check=True,
@@ -250,11 +248,4 @@ def cleanup_browser_process(process: subprocess.Popen[bytes]) -> None:
 
 if __name__ == "__main__":
     path: Path = DATA_FOLDER / "prompt_ideas" / "standard_ss13_02.json"
-    time.sleep(5)
-    keyboard: Controller = Controller()
-    keyboard.press(Key.cmd)
-    keyboard.press("v")
-    time.sleep(.1)
-    keyboard.release("v")
-    keyboard.release(Key.cmd)
-    # run_auto_prompt(conversation_path=path, wait_after_submit=5.0)
+    run_auto_prompt(conversation_path=path, wait_after_submit=5.0)
