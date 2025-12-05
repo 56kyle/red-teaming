@@ -1,22 +1,33 @@
 from __future__ import annotations
-from typing import Optional, List, Callable, Any
+from typing import Any
+from typing import Callable
+from typing import List
+from typing import Optional
 from pathlib import Path
 
-from Cocoa import NSWorkspace
-from Quartz import (
-    AXUIElementCreateApplication,
-    AXUIElementCopyAttributeValue,
-    kAXWindowsAttribute,
-    kAXChildrenAttribute,
-    kAXRoleAttribute,
-    kAXTitleAttribute,
-    kAXValueAttribute,
-)
-
 from ctypes import byref
+
 from loguru import logger
-from watchdog.observers import Observer
+from watchdog.events import FileSystemEvent
 from watchdog.events import FileSystemEventHandler
+from watchdog.observers.fsevents import FSEventsObserver
+
+
+try:
+    from Cocoa import NSWorkspace
+    from Quartz import (
+        AXUIElementCopyAttributeValue,
+        AXUIElementCreateApplication,
+        kAXChildrenAttribute,
+        kAXRoleAttribute,
+        kAXTitleAttribute,
+        kAXValueAttribute,
+        kAXWindowsAttribute,
+    )
+except Exception as import_error:
+    raise RuntimeError(
+        "PyObjC must be installed and this module must run on macOS."
+    ) from import_error
 
 
 def ax_get_value(element: Any, attribute: str) -> Optional[Any]:
@@ -54,10 +65,12 @@ def find_atlas_accessibility_root() -> Optional[Any]:
     """Return the AX root for the ChatGPT Atlas app if running."""
     workspace = NSWorkspace.sharedWorkspace()
     apps = workspace.runningApplications()
+
     for app in apps:
         name: str = str(app.localizedName())
         if "ChatGPT" in name:
             return AXUIElementCreateApplication(app.processIdentifier())
+
     return None
 
 
@@ -76,21 +89,23 @@ def collect_attribute_values(root: Any, extractor: Callable[[Any], Optional[str]
 
 def find_webview_nodes(root_window: Any) -> List[Any]:
     """Return a list of AXWebArea nodes inside a window."""
-    stack: List[Any] = ax_get_children(root_window)
     results: List[Any] = []
+    stack: List[Any] = ax_get_children(root_window)
+
     while stack:
         node: Any = stack.pop()
         role: Optional[str] = ax_get_role(node)
         if role == "AXWebArea":
             results.append(node)
         stack.extend(ax_get_children(node))
+
     return results
 
 
 class AtlasBrowserState:
-    IDLE = "idle"
-    GENERATING = "generating"
-    AGENT_RUNNING = "agent_running"
+    IDLE: str = "idle"
+    GENERATING: str = "generating"
+    AGENT_RUNNING: str = "agent_running"
 
 
 def derive_atlas_state(text_nodes: List[str], button_labels: List[str]) -> str:
@@ -100,6 +115,7 @@ def derive_atlas_state(text_nodes: List[str], button_labels: List[str]) -> str:
     agent_tokens: List[str] = ["agent", "working", "performing task"]
     if any(keyword in text.lower() for text in text_nodes for keyword in agent_tokens):
         return AtlasBrowserState.AGENT_RUNNING
+
     return AtlasBrowserState.IDLE
 
 
@@ -112,21 +128,25 @@ def inspect_atlas_state(root_app: Any) -> Optional[str]:
     webviews: List[Any] = find_webview_nodes(root_window)
     if not webviews:
         return None
+
     webview: Any = webviews[0]
+
     text_nodes: List[str] = collect_attribute_values(webview, ax_get_text)
     button_labels: List[str] = collect_attribute_values(webview, ax_get_title)
+
     return derive_atlas_state(text_nodes, button_labels)
 
 
 class AtlasContentEventHandler(FileSystemEventHandler):
     """Dispatch state change events based on filesystem updates."""
+
     def __init__(self, atlas_root: Any, on_change: Callable[[str], None]) -> None:
         super().__init__()
         self._atlas_root: Any = atlas_root
         self._on_change: Callable[[str], None] = on_change
         self._last_state: Optional[str] = None
 
-    def on_any_event(self, event) -> None:
+    def on_any_event(self, event: FileSystemEvent) -> None:
         new_state: Optional[str] = inspect_atlas_state(self._atlas_root)
         if new_state and new_state != self._last_state:
             self._last_state = new_state
@@ -143,16 +163,19 @@ def monitor_atlas_state(on_state_change: Callable[[str], None]) -> None:
     if not atlas_data_root.exists():
         logger.error(f"Missing expected Atlas data directory: {atlas_data_root}")
         return
-    handler: AtlasContentEventHandler = AtlasContentEventHandler(atlas_root, on_state_change)
-    observer: Observer = Observer()
+
+    handler: AtlasContentEventHandler = AtlasContentEventHandler(atlas_root=atlas_root, on_change=on_state_change)
+
+    observer: FSEventsObserver = FSEventsObserver()
     observer.schedule(handler, str(atlas_data_root), recursive=True)
+
     logger.info("Atlas state observer started")
     observer.start()
     observer.join()
 
 
 def handle_state_change(state: str) -> None:
-    """Small callback function to document state changes."""
+    """Callback that logs any changes to the atlas browser's state."""
     logger.info(f"Atlas browser state changed: {state}")
 
 
