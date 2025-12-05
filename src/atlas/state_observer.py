@@ -18,6 +18,7 @@ try:
     from Cocoa import NSWorkspace
     from ApplicationServices import (
         AXUIElementCopyAttributeValue,
+        AXUIElementCopyAttributeValues,
         AXUIElementCreateApplication,
         kAXChildrenAttribute,
         kAXRoleAttribute,
@@ -39,10 +40,18 @@ def ax_get_value(element: Any, attribute: str) -> Optional[Any]:
         logger.warning(e)
         return None
 
+def ax_get_values(element: Any, attribute: str) -> Optional[List[Any]]:
+    """Return an AX attribute's values or None."""
+    try:
+        return AXUIElementCopyAttributeValues(element, attribute, 0, 100, None)
+    except Exception as e:
+        logger.warning(e)
+        return None
+
 
 def ax_get_children(element: Any) -> List[Any]:
     """Return a list of an AX element's children."""
-    raw_children: Optional[Any] = ax_get_value(element, kAXChildrenAttribute)
+    raw_children: Optional[Any] = ax_get_values(element, kAXChildrenAttribute)
     return list(raw_children) if raw_children else []
 
 
@@ -104,7 +113,7 @@ def find_webview_nodes(root_window: Any) -> List[Any]:
     results: List[Any] = []
     stack: List[Any] = ax_get_children(root_window)
 
-    while stack:
+    while len(stack) < 100:
         node: Any = stack.pop()
         role: Optional[str] = ax_get_role(node)
         if role == "AXWebArea":
@@ -179,8 +188,7 @@ def monitor_atlas_state(on_state_change: Callable[[str], None]) -> None:
     handler: AtlasContentEventHandler = AtlasContentEventHandler(atlas_root=atlas_root, on_change=on_state_change)
 
     with atlas_file_observer(handler) as observer:
-        while True:
-            pass
+        pass
 
 @contextmanager
 def atlas_file_observer(handler: AtlasContentEventHandler):
@@ -204,6 +212,6 @@ def handle_state_change(state: str) -> None:
 
 if __name__ == "__main__":
     atlas_root: Any = find_atlas_accessibility_root()
-    print(dir(atlas_root))
+    inspect_atlas_state(atlas_root)
     # monitor_atlas_state(handle_state_change)
 
