@@ -212,9 +212,6 @@ def run_auto_prompt(conversation_path: Path, wait_after_submit: float = 2.0) -> 
         logger.error(f"Error during auto-prompt execution: {e}", exc_info=True)
         raise
 
-    finally:
-        browser_process.kill()
-
 
 def cleanup_browser_process(process: subprocess.Popen[bytes]) -> None:
     """Terminate a browser process gracefully, forcing kill if necessary."""
