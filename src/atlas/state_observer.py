@@ -1,4 +1,6 @@
 from __future__ import annotations
+
+from contextlib import contextmanager
 from typing import Any
 from typing import Callable
 from typing import List
@@ -34,9 +36,11 @@ except Exception as import_error:
 
 def ax_get_value(element: Any, attribute: str) -> Optional[Any]:
     """Return an AX attribute value or None."""
-    result: Any = None
-    status: int = AXUIElementCopyAttributeValue(element, attribute, byref(result))
-    return result if status == 0 else None
+    try:
+        return AXUIElementCopyAttributeValue(element, attribute, None)
+    except Exception as e:
+        logger.warning(e)
+        return None
 
 
 def ax_get_children(element: Any) -> List[Any]:
@@ -149,6 +153,7 @@ class AtlasContentEventHandler(FileSystemEventHandler):
         self._last_state: Optional[str] = None
 
     def on_any_event(self, event: FileSystemEvent) -> None:
+        logger.info(event)
         new_state: Optional[str] = inspect_atlas_state(self._atlas_root)
         if new_state and new_state != self._last_state:
             self._last_state = new_state
@@ -167,12 +172,24 @@ def monitor_atlas_state(on_state_change: Callable[[str], None]) -> None:
 
     handler: AtlasContentEventHandler = AtlasContentEventHandler(atlas_root=atlas_root, on_change=on_state_change)
 
-    observer: FSEventsObserver = FSEventsObserver()
-    observer.schedule(handler, str(ATLAS_DATA_FOLDER), recursive=True)
+    with atlas_file_observer(handler) as observer:
+        logger.info("Atlas state observer started")
+        while True:
+            pass
 
-    logger.info("Atlas state observer started")
-    observer.start()
-    observer.join()
+@contextmanager
+def atlas_file_observer(handler: AtlasContentEventHandler):
+    """Yield a running FSEventsObserver and ensure proper cleanup."""
+    observer: FSEventsObserver = FSEventsObserver()
+    try:
+        observer.schedule(handler, str(ATLAS_DATA_FOLDER), recursive=True)
+        observer.start()
+        logger.info("Atlas state observer started")
+        yield observer
+    finally:
+        observer.stop()
+        observer.join()
+        logger.info("Atlas state observer stopped")
 
 
 def handle_state_change(state: str) -> None:
