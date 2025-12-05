@@ -5,9 +5,6 @@ from typing import Any
 from typing import Callable
 from typing import List
 from typing import Optional
-from pathlib import Path
-
-from ctypes import byref
 
 from loguru import logger
 from watchdog.events import FileSystemEvent
@@ -67,6 +64,16 @@ def ax_get_text(element: Any) -> Optional[str]:
     return str(value) if value else None
 
 
+def get_atlas_accessibility_root() -> Any:
+    """Return the AX root for the ChatGPT Atlas app and ensure it is running/setup."""
+    atlas_root: Optional[Any] = find_atlas_accessibility_root()
+    if not atlas_root:
+        raise RuntimeError("ChatGPT Atlas application is not running")
+    if not ATLAS_DATA_FOLDER.exists():
+        raise FileNotFoundError(f"Missing expected Atlas data directory: {ATLAS_DATA_FOLDER}")
+    return atlas_root
+
+
 def find_atlas_accessibility_root() -> Optional[Any]:
     """Return the AX root for the ChatGPT Atlas app if running."""
     workspace = NSWorkspace.sharedWorkspace()
@@ -76,7 +83,6 @@ def find_atlas_accessibility_root() -> Optional[Any]:
         name: str = str(app.localizedName())
         if "ChatGPT" in name:
             return AXUIElementCreateApplication(app.processIdentifier())
-
     return None
 
 
@@ -173,7 +179,6 @@ def monitor_atlas_state(on_state_change: Callable[[str], None]) -> None:
     handler: AtlasContentEventHandler = AtlasContentEventHandler(atlas_root=atlas_root, on_change=on_state_change)
 
     with atlas_file_observer(handler) as observer:
-        logger.info("Atlas state observer started")
         while True:
             pass
 
@@ -198,4 +203,7 @@ def handle_state_change(state: str) -> None:
 
 
 if __name__ == "__main__":
-    monitor_atlas_state(handle_state_change)
+    atlas_root: Any = find_atlas_accessibility_root()
+    print(dir(atlas_root))
+    # monitor_atlas_state(handle_state_change)
+
