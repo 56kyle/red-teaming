@@ -21,7 +21,7 @@ from atlas.demo import get_user_messages_from_conversation
 # Constants for wait strategies
 _MAX_BROWSER_STARTUP_WAIT_SECONDS: float = 15.0
 _MAX_TAB_OPEN_WAIT_SECONDS: float = 5.0
-_PROCESS_CHECK_INTERVAL_SECONDS: float = 0.1
+_PROCESS_CHECK_INTERVAL_SECONDS: float = 0.01
 _KEYBOARD_STABILIZATION_DELAY_SECONDS: float = 0.05
 _WINDOW_FOCUS_DELAY_SECONDS: float = 0.5
 
@@ -44,19 +44,14 @@ def _wait_for_browser_startup(
     """
     start_time: float = time.time()
     elapsed_seconds: float = 0.0
-    check_interval: float = _PROCESS_CHECK_INTERVAL_SECONDS
 
-    while elapsed_seconds < timeout_seconds:
-        if not _is_process_alive(process):
-            msg: str = (
-                f"Browser process {process.pid} terminated unexpectedly "
-                f"after {elapsed_seconds:.2f}s"
-            )
-            raise RuntimeError(msg)
-
-        time.sleep(check_interval)
+    while elapsed_seconds < timeout_seconds and not _is_process_alive(process):
+        time.sleep(_PROCESS_CHECK_INTERVAL_SECONDS)
         elapsed_seconds = time.time() - start_time
-        check_interval = min(check_interval * 1.2, 0.5)
+
+    if not _is_process_alive(process):
+        msg: str = f"Browser process {process.pid} terminated unexpectedly after {elapsed_seconds:.2f}s"
+        raise RuntimeError(msg)
 
     logger.debug(f"Browser stabilized after {elapsed_seconds:.2f}s startup wait")
 
