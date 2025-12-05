@@ -5,6 +5,7 @@ import time
 from pathlib import Path
 from typing import Any
 
+import pyperclip
 from loguru import logger
 from openai.types.conversations import ItemCreateParams
 from openai.types.responses import ResponseInputItemParam
@@ -63,7 +64,7 @@ def _focus_browser_window() -> None:
     On macOS, uses osascript to bring the ChatGPT Atlas application to the foreground.
     On other platforms, relies on system window management.
     """
-    if sys.platform == "darwin":
+    if "darwin" in sys.platform:
         try:
             applescript: str = (
                 'tell application "ChatGPT Atlas" to activate'
@@ -120,35 +121,22 @@ def _send_new_tab_keyboard_command(keyboard: Controller) -> None:
     _wait_for_keyboard_stability()
 
 
-def _open_new_tab(max_retries: int = 3) -> None:
+def _open_new_tab() -> None:
     """Open a new tab with exponential backoff retry logic."""
     keyboard: Controller = Controller()
-
-    for attempt in range(max_retries):
-        try:
-            logger.debug(f"Opening new tab (attempt {attempt + 1}/{max_retries})")
-            _send_new_tab_keyboard_command(keyboard)
-            logger.debug("New tab opened")
-            return
-
-        except Exception as e:
-            logger.warning(f"Attempt {attempt + 1} to open tab failed: {e}")
-            if attempt == max_retries - 1:
-                msg: str = f"Failed to open new tab after {max_retries} attempts"
-                raise RuntimeError(msg)
-
-            retry_wait: float = 0.5 * (2 ** attempt)
-            logger.debug(f"Waiting {retry_wait:.2f}s before retry")
-            time.sleep(retry_wait)
+    _send_new_tab_keyboard_command(keyboard)
+    logger.debug("New tab opened")
 
 
 def _enter_text_with_keyboard(text: str, delay_per_char: float = 0.02) -> None:
     """Enter text character-by-character into the focused browser window."""
     keyboard: Controller = Controller()
-
-    for char in text:
-        keyboard.type(char)
-        time.sleep(delay_per_char)
+    pyperclip.copy(text)
+    keyboard.press(Key.cmd)
+    keyboard.press("v")
+    time.sleep(.1)
+    keyboard.release("v")
+    keyboard.release(Key.cmd)
 
     _wait_for_keyboard_stability(delay_per_char)
     logger.debug(f"Entered {len(text)} characters")
@@ -229,17 +217,10 @@ def run_auto_prompt(
         msg: str = f"Conversation file not found at {conversation_path}"
         raise FileNotFoundError(msg)
 
-    browser_process: subprocess.Popen[bytes] | None = None
-    if launch_browser_automatically:
-        browser_process = _launch_browser()
-        _focus_browser_window()
-    else:
-        logger.info("Skipping browser launch; assuming browser is already open")
-        _focus_browser_window()
+    browser_process: subprocess.Popen[bytes] | None = _launch_browser()
 
     try:
-        _open_new_tab()
-
+        # _open_new_tab()
         logger.info("Loading planned conversation from file")
         params: ItemCreateParams = load_planned_conversation(conversation_path)
         items: list[ResponseInputItemParam] = list(params.get("items", []))
@@ -284,4 +265,11 @@ def cleanup_browser_process(process: subprocess.Popen[bytes]) -> None:
 
 if __name__ == "__main__":
     path: Path = DATA_FOLDER / "prompt_ideas" / "standard_ss13_02.json"
-    run_auto_prompt(conversation_path=path, wait_after_submit=5.0)
+    time.sleep(5)
+    keyboard: Controller = Controller()
+    keyboard.press(Key.cmd)
+    keyboard.press("v")
+    time.sleep(.1)
+    keyboard.release("v")
+    keyboard.release(Key.cmd)
+    # run_auto_prompt(conversation_path=path, wait_after_submit=5.0)
