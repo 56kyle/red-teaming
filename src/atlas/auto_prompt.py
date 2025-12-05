@@ -11,6 +11,7 @@ from openai.types.conversations import ItemCreateParams
 from openai.types.responses import ResponseInputItemParam
 from pynput.keyboard import Controller
 from pynput.keyboard import Key
+from pynput.keyboard import KeyCode
 
 from atlas.constants import ATLAS_APP_EXECUTABLE_PATH
 from atlas.constants import DATA_FOLDER
@@ -116,27 +117,27 @@ def _wait_for_keyboard_stability(delay_seconds: float = _KEYBOARD_STABILIZATION_
 
 def _open_new_tab() -> None:
     """Open a new tab with exponential backoff retry logic."""
-    keyboard.press(Key.cmd)
-    keyboard.press("t")
-    time.sleep(.1)
-    keyboard.release("t")
-    keyboard.release(Key.cmd)
+    __press_and_release_together(Key.cmd, "t")
     _wait_for_keyboard_stability()
     logger.debug("New tab opened")
 
 
 def _enter_text_with_keyboard(text: str, delay_per_char: float = 0.02) -> None:
     """Enter text character-by-character into the focused browser window."""
-    keyboard: Controller = Controller()
     pyperclip.copy(text)
-    keyboard.press(Key.cmd)
-    keyboard.press("v")
-    time.sleep(.1)
-    keyboard.release("v")
-    keyboard.release(Key.cmd)
+    __press_and_release_together(Key.cmd, "v")
 
     _wait_for_keyboard_stability(delay_per_char)
     logger.debug(f"Entered {len(text)} characters")
+
+
+def __press_and_release_together(*keys: KeyCode | str) -> None:
+    """Presses all provided keys together in order then releases all."""
+    for key in keys:
+        keyboard.press(key)
+    time.sleep(.1)
+    for key in reversed(keys):
+        keyboard.release(key)
 
 
 def _submit_prompt(min_wait_seconds: float = 0.05) -> None:
