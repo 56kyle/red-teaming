@@ -255,6 +255,16 @@ def find_application_info_by_name_substring(
     return None
 
 
+def find_application_info_by_identifier(identifier: str) -> ApplicationInfo | None:
+    """Find a running application whose identifier contains the given substring."""
+    running_applications: list[ApplicationInfo] = get_running_applications_with_regular_activation_policy()
+
+    for application_info in running_applications:
+        if identifier in application_info["bundle_identifier"]:
+            return application_info
+    return None
+
+
 def serialize_hierarchy_to_json_string(
     hierarchy_dictionary: AccessibilityElementDictionary,
     indent_spaces: int = 2,
@@ -307,13 +317,13 @@ def main() -> None:
 
     Lists running applications and exports the hierarchy of a target application.
     """
-    target_application_name_substring: str = "atlas"
+    target_application_name_substring: str = "atlas.web"
     output_file_path: Path = Path("hierarchy.json")
-    hierarchy_maximum_depth: int = 5
+    hierarchy_maximum_depth: int = 25
 
     log_running_applications_summary()
 
-    matching_application: ApplicationInfo | None = find_application_info_by_name_substring(
+    matching_application: ApplicationInfo | None = find_application_info_by_identifier(
         target_application_name_substring
     )
 
