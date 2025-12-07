@@ -181,11 +181,15 @@ from atlas.accessibility.search import (
     find_text_areas,
     find_static_text,
     # Live search
-    find_live_by_predicate,
+    find_live,
+    find_live_first,
+    find_live_by_predicate,  # Backward compatibility alias
     find_live_by_role,
+    find_live_by_subrole,
     find_live_by_title,
     find_live_by_identifier,
     find_live_web_area,
+    find_articles,
 )
 
 from atlas.accessibility.conversion import (
@@ -382,11 +386,15 @@ __all__ = [
     "find_text_fields",
     "find_text_areas",
     "find_static_text",
+    "find_live",
+    "find_live_first",
     "find_live_by_predicate",
     "find_live_by_role",
+    "find_live_by_subrole",
     "find_live_by_title",
     "find_live_by_identifier",
     "find_live_web_area",
+    "find_articles",
     # Conversion functions
     "convert_element",
     "convert_application",

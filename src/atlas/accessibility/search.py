@@ -376,14 +376,65 @@ def find_static_text(hierarchy: AccessibilityElementDict) -> list[AccessibilityE
 # =============================================================================
 
 
-def find_live_by_predicate(
+def find_live(
+    starting_element: AXUIElementRef,
+    predicate: Callable[[AXUIElementRef], bool],
+    maximum_depth: int = 10,
+    current_depth: int = 0,
+    visited: frozenset[int] | None = None,
+) -> list[AXUIElementRef]:
+    """Search the live accessibility hierarchy for all matching elements.
+
+    Unlike cached hierarchy searches, this queries the actual
+    accessibility tree which reflects current application state.
+
+    Args:
+        starting_element: Element to start search from
+        predicate: Function that returns True for matching elements
+        maximum_depth: Maximum depth to traverse
+        current_depth: Current depth (internal use)
+        visited: Set of visited element hashes (internal use)
+
+    Returns:
+        List of all matching elements
+    """
+    if visited is None:
+        visited = frozenset()
+
+    results: list[AXUIElementRef] = []
+
+    elem_hash: int = element_hash(starting_element)
+    if elem_hash in visited or current_depth >= maximum_depth:
+        return results
+
+    if predicate(starting_element):
+        results.append(starting_element)
+
+    new_visited: frozenset[int] = visited | {elem_hash}
+    children: Any | None = ax_get_attribute(starting_element, "AXChildren")
+
+    if children:
+        try:
+            for i in range(len(children)):
+                results.extend(
+                    find_live(
+                        children[i], predicate, maximum_depth, current_depth + 1, new_visited
+                    )
+                )
+        except TypeError:
+            pass
+
+    return results
+
+
+def find_live_first(
     starting_element: AXUIElementRef,
     predicate: Callable[[AXUIElementRef], bool],
     maximum_depth: int = 10,
     current_depth: int = 0,
     visited: frozenset[int] | None = None,
 ) -> AXUIElementRef | None:
-    """Search the live accessibility hierarchy for an element.
+    """Search the live accessibility hierarchy for the first matching element.
 
     Unlike cached hierarchy searches, this queries the actual
     accessibility tree which reflects current application state.
@@ -398,32 +449,14 @@ def find_live_by_predicate(
     Returns:
         First matching element, or None if not found
     """
+    results: list[AXUIElementRef] = find_live(
+        starting_element, predicate, maximum_depth, current_depth, visited
+    )
+    return results[0] if results else None
 
-    if visited is None:
-        visited = frozenset()
 
-    elem_hash: int = element_hash(starting_element)
-    if elem_hash in visited or current_depth >= maximum_depth:
-        return None
-
-    if predicate(starting_element):
-        return starting_element
-
-    new_visited: frozenset[int] = visited | {elem_hash}
-    children: Any | None = ax_get_attribute(starting_element, "AXChildren")
-
-    if children:
-        try:
-            for i in range(len(children)):
-                result: AXUIElementRef | None = find_live_by_predicate(
-                    children[i], predicate, maximum_depth, current_depth + 1, new_visited
-                )
-                if result is not None:
-                    return result
-        except TypeError:
-            pass
-
-    return None
+# Backward compatibility alias
+find_live_by_predicate = find_live_first
 
 
 def find_live_by_role(
@@ -524,4 +557,4 @@ def find_articles(
     maximum_depth: int = 10,
 ) -> list[AXUIElementRef]:
     """Find all articles in the live hierarchy."""
-    return find_live_by_subrole(starting_element, "AXDocumentArticle", maximum_depth)
+    return find_live(starting_element, create_live_subrole_predicate("AXDocumentArticle"), maximum_depth)
