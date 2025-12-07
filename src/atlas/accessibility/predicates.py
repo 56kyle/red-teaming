@@ -233,6 +233,25 @@ def create_live_role_predicate(target_role: str) -> Callable[[AXUIElementRef], b
     return predicate
 
 
+def create_live_subrole_predicate(target_subrole: str) -> Callable[[AXUIElementRef], bool]:
+    """Create a predicate for live element subrole matching.
+
+    Note: This imports ax_get_attribute at call time to avoid circular imports.
+
+    Args:
+        target_subrole: The subrole to match
+
+    Returns:
+        A predicate function for live elements
+    """
+
+    def predicate(element: AXUIElementRef) -> bool:
+        subrole: Any | None = ax_get_attribute(element, "AXSubrole")
+        return subrole == target_subrole
+
+    return predicate
+
+
 def create_live_title_predicate(
     target_title: str,
     partial_match: bool = False,

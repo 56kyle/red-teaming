@@ -9,7 +9,9 @@ from __future__ import annotations
 
 from typing import Any, Callable
 
+from atlas.accessibility import ax_get_attribute
 from atlas.accessibility.constants import AXROLE_WEB_AREA
+from atlas.accessibility.predicates import create_live_subrole_predicate
 from atlas.accessibility.predicates import (
     create_role_predicate,
     create_subrole_predicate,
@@ -396,7 +398,6 @@ def find_live_by_predicate(
     Returns:
         First matching element, or None if not found
     """
-    from atlas.accessibility.api import ax_get_attribute
 
     if visited is None:
         visited = frozenset()
@@ -441,6 +442,24 @@ def find_live_by_role(
         First matching element, or None if not found
     """
     return find_live_by_predicate(starting_element, create_live_role_predicate(role), maximum_depth)
+
+
+def find_live_by_subrole(
+    starting_element: AXUIElementRef,
+    subrole: str,
+    maximum_depth: int = 10,
+) -> AXUIElementRef | None:
+    """Find the first element with a specific subrole in the live hierarchy.
+
+    Args:
+        starting_element: Element to start search from
+        subrole: The AXRole to match
+        maximum_depth: Maximum depth to traverse
+
+    Returns:
+        First matching element, or None if not found
+    """
+    return find_live_by_predicate(starting_element, create_live_subrole_predicate(subrole), maximum_depth)
 
 
 def find_live_by_title(
@@ -498,3 +517,11 @@ def find_live_web_area(
         First web area element, or None if not found
     """
     return find_live_by_role(starting_element, AXROLE_WEB_AREA, maximum_depth)
+
+
+def find_articles(
+    starting_element: AXUIElementRef,
+    maximum_depth: int = 10,
+) -> list[AXUIElementRef]:
+    """Find all articles in the live hierarchy."""
+    return find_live_by_subrole(starting_element, "AXDocumentArticle", maximum_depth)
