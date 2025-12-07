@@ -550,3 +550,33 @@ def find_live_web_area(
         First web area element, or None if not found
     """
     return find_live_by_role(starting_element, AXROLE_WEB_AREA, maximum_depth)
+
+
+def find_live_innermost_web_area_with_title(
+    starting_element: AXUIElementRef,
+    maximum_depth: int = 10,
+) -> AXUIElementRef | None:
+    """Find the innermost AXWebArea that has a title in the live hierarchy.
+
+    In Chromium-based apps, web areas are often nested:
+    AXWebArea > AXUnknown > AXWebArea (with title)
+
+    This finds the deepest one with actual content.
+
+    Args:
+        starting_element: Element to start search from
+        maximum_depth: Maximum depth to traverse
+
+    Returns:
+        The innermost web area with a title, or None
+    """
+    web_areas: list[AXUIElementRef] = find_live(
+        starting_element, create_live_role_predicate(AXROLE_WEB_AREA), maximum_depth
+    )
+
+    for web_area in reversed(web_areas):
+        title: Any | None = ax_get_attribute(web_area, "AXTitle")
+        if title:
+            return web_area
+
+    return web_areas[-1] if web_areas else None

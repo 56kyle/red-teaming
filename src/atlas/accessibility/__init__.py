@@ -189,6 +189,7 @@ from atlas.accessibility.search import (
     find_live_by_title,
     find_live_by_identifier,
     find_live_web_area,
+    find_live_innermost_web_area_with_title,
 )
 
 from atlas.accessibility.conversion import (
@@ -393,6 +394,7 @@ __all__ = [
     "find_live_by_title",
     "find_live_by_identifier",
     "find_live_web_area",
+    "find_live_innermost_web_area_with_title",
     "find_articles",
     # Conversion functions
     "convert_element",
