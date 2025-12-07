@@ -552,7 +552,7 @@ def find_live_web_area(
     return find_live_by_role(starting_element, AXROLE_WEB_AREA, maximum_depth)
 
 
-def find_articles(
+def find_live_articles(
     starting_element: AXUIElementRef,
     maximum_depth: int = 10,
 ) -> list[AXUIElementRef]:
