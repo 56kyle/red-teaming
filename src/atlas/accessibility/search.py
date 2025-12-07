@@ -550,11 +550,3 @@ def find_live_web_area(
         First web area element, or None if not found
     """
     return find_live_by_role(starting_element, AXROLE_WEB_AREA, maximum_depth)
-
-
-def find_live_articles(
-    starting_element: AXUIElementRef,
-    maximum_depth: int = 10,
-) -> list[AXUIElementRef]:
-    """Find all articles in the live hierarchy."""
-    return find_live(starting_element, create_live_subrole_predicate("AXDocumentArticle"), maximum_depth)

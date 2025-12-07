@@ -189,7 +189,6 @@ from atlas.accessibility.search import (
     find_live_by_title,
     find_live_by_identifier,
     find_live_web_area,
-    find_articles,
 )
 
 from atlas.accessibility.conversion import (
