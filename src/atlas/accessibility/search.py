@@ -381,7 +381,6 @@ def find_live(
     predicate: Callable[[AXUIElementRef], bool],
     maximum_depth: int = 10,
     current_depth: int = 0,
-    visited: frozenset[int] | None = None,
 ) -> list[AXUIElementRef]:
     """Search the live accessibility hierarchy for all matching elements.
 
@@ -398,28 +397,20 @@ def find_live(
     Returns:
         List of all matching elements
     """
-    if visited is None:
-        visited = frozenset()
-
     results: list[AXUIElementRef] = []
-
-    elem_hash: int = element_hash(starting_element)
-    if elem_hash in visited or current_depth >= maximum_depth:
+    if current_depth >= maximum_depth:
         return results
 
     if predicate(starting_element):
         results.append(starting_element)
 
-    new_visited: frozenset[int] = visited | {elem_hash}
     children: Any | None = ax_get_attribute(starting_element, "AXChildren")
 
     if children:
         try:
             for i in range(len(children)):
                 results.extend(
-                    find_live(
-                        children[i], predicate, maximum_depth, current_depth + 1, new_visited
-                    )
+                    find_live(children[i], predicate, maximum_depth, current_depth + 1)
                 )
         except TypeError:
             pass
@@ -432,7 +423,6 @@ def find_live_first(
     predicate: Callable[[AXUIElementRef], bool],
     maximum_depth: int = 10,
     current_depth: int = 0,
-    visited: frozenset[int] | None = None,
 ) -> AXUIElementRef | None:
     """Search the live accessibility hierarchy for the first matching element.
 
@@ -449,9 +439,7 @@ def find_live_first(
     Returns:
         First matching element, or None if not found
     """
-    results: list[AXUIElementRef] = find_live(
-        starting_element, predicate, maximum_depth, current_depth, visited
-    )
+    results: list[AXUIElementRef] = find_live(starting_element, predicate, maximum_depth, current_depth)
     return results[0] if results else None
 
 

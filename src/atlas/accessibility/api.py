@@ -9,6 +9,8 @@ These functions perform system calls but are otherwise deterministic.
 from __future__ import annotations
 
 from typing import Any
+from typing import Iterable
+from typing import Optional
 
 from loguru import logger
 
@@ -25,11 +27,13 @@ from atlas.accessibility._types import (
 try:
     from ApplicationServices import (
         AXUIElementCopyAttributeValue,
+        AXUIElementCopyAttributeValues,
         AXUIElementCopyAttributeNames,
         AXUIElementCopyParameterizedAttributeValue,
         AXUIElementCopyParameterizedAttributeNames,
         AXUIElementCreateApplication,
         AXUIElementCreateSystemWide,
+        kAXChildrenAttribute,
         AXValueGetValue,
         kAXValueTypeCGPoint,
         kAXValueTypeCGSize,
@@ -67,6 +71,18 @@ def ax_get_attribute(element: AXUIElementRef, attribute_name: str) -> Any | None
     return value if error_code == 0 else None
 
 
+def ax_get_values(element: Any, attribute: str) -> Optional[list[Any]]:
+    """Return an AX attribute's values or None."""
+    try:
+        status: int
+        result: Iterable[Any]
+        status, result = AXUIElementCopyAttributeValues(element, attribute, 0, 100, None)
+        return result if status == 0 else None
+    except Exception as e:
+        logger.warning(e)
+        return None
+
+
 def ax_get_attribute_names(element: AXUIElementRef) -> list[str]:
     """Get all attribute names for an accessibility element.
 
@@ -80,6 +96,12 @@ def ax_get_attribute_names(element: AXUIElementRef) -> list[str]:
     names: Any
     error_code, names = AXUIElementCopyAttributeNames(element, None)
     return list(names) if error_code == 0 else []
+
+
+def ax_get_children(element: Any) -> list[Any]:
+    """Return a list of an AX element's children."""
+    raw_children: Optional[Any] = ax_get_values(element, kAXChildrenAttribute)
+    return list(raw_children) if raw_children is not None else []
 
 
 def ax_get_parameterized_attribute_names(element: AXUIElementRef) -> list[str]:
