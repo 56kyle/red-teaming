@@ -10,9 +10,9 @@ from atlas.accessibility import AXUIElementRef
 from atlas.accessibility import ApplicationInfo
 from atlas.accessibility import ax_get_attribute
 from atlas.accessibility import ax_get_attribute_names
+from atlas.accessibility import ax_perform_action
 from atlas.accessibility import find_live
 from atlas.accessibility import find_live_first
-from atlas.accessibility.api import ax_get_children
 
 from atlas.app import get_or_create_atlas_application
 
@@ -74,8 +74,26 @@ def _is_atlas_web_area(element: AXUIElementRef) -> bool:
     return result
 
 
-def open_atlas_sidebar(sidebar_element: AXUIElementRef) -> None:
+def toggle_atlas_sidebar(starting_element: AXUIElementRef) -> None:
     """Opens the Atlas sidebar provided."""
+    sidebar_button: AXUIElementRef = get_atlas_sidebar_button(starting_element)
+    ax_perform_action(sidebar_button, "AXEnable")
+
+
+def get_atlas_sidebar_button(starting_element: AXUIElementRef) -> AXUIElementRef:
+    """Returns the Atlas sidebar button."""
+    return find_live_first(starting_element, _is_atlas_sidebar_button, maximum_depth=20)
+
+
+def _is_atlas_sidebar_button(element: AXUIElementRef) -> bool:
+    """Returns True if the element is the Atlas sidebar button."""
+    role: Any | None = ax_get_attribute(element, "AXRole")
+    title: Any | None = ax_get_attribute(element, "AXTitle")
+    description: Any | None = ax_get_attribute(element, "AXDescription")
+    phrase_met: bool = str(title) == "Open sidebar" or str(description) == "Close sidebar"
+    if phrase_met:
+        return True
+    return str(role) == "AXButton" and phrase_met
 
 
 def get_atlas_sidebar(starting_element: AXUIElementRef) -> AXUIElementRef | None:
@@ -138,5 +156,5 @@ if __name__ == "__main__":
     atlas_window: AXUIElementRef = get_atlas_window(atlas_root)
     sidebar: AXUIElementRef = get_atlas_sidebar(atlas_window)
     links: list[str] = get_sidebar_conversation_links(sidebar)
-    print(links)
+    logger.info(links)
 
