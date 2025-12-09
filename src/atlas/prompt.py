@@ -13,14 +13,19 @@ from atlas.accessibility import find_live
 from atlas.accessibility import find_live_by_subrole
 from atlas.accessibility import find_live_first
 from atlas.accessibility.api import ax_get_children
-from atlas.accessibility.predicates import create_live_subrole_predicate
 from atlas.interface import get_atlas_ui
 from atlas.interface import get_atlas_window
 
 
 def find_articles(starting_element: AXUIElementRef, maximum_depth: int = 10) -> list[AXUIElementRef]:
     """Find all articles in the live hierarchy."""
-    return find_live(starting_element, create_live_subrole_predicate("AXDocumentArticle"), maximum_depth)
+    return find_live(starting_element, _is_article, maximum_depth)
+
+
+def _is_article(element: AXUIElementRef) -> bool:
+    """Returns whether the provided element is an article."""
+    role: Any | None = ax_get_attribute(element, "AXSubrole")
+    return role == "AXDocumentArticle"
 
 
 def get_latest_article(starting_element: AXUIElementRef) -> AXUIElementRef:
