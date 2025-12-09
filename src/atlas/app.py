@@ -8,6 +8,7 @@ from loguru import logger
 
 from atlas.accessibility import ApplicationInfo
 from atlas.constants import ATLAS_APP_EXECUTABLE_PATH
+from atlas.constants import ATLAS_APP_NAME
 
 
 try:
@@ -61,7 +62,7 @@ def _find_atlas_with_regular_activation_policy() -> ApplicationInfo | None:
     """Returns the Atlas application that has a regular activation policy if present."""
     running_applications: list[ApplicationInfo] = _get_running_applications_with_regular_activation_policy()
     for application in running_applications:
-        if application["bundle_identifier"] == "com.openai.atlas":
+        if application["bundle_identifier"] == ATLAS_APP_NAME:
             return application
     return None
 
