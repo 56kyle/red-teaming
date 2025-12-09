@@ -2,11 +2,12 @@
 
 from __future__ import annotations
 
-from typing import Any, TypedDict
+from typing import Any
 from typing import Generator
 
 from loguru import logger
 
+from atlas.accessibility import AXUIElementRef
 from atlas.accessibility import ax_get_attribute
 from atlas.accessibility import find_live
 from atlas.accessibility import find_live_by_subrole
@@ -15,37 +16,6 @@ from atlas.accessibility.api import ax_get_children
 from atlas.accessibility.predicates import create_live_subrole_predicate
 from atlas.interface import get_atlas_ui
 from atlas.interface import get_atlas_window
-
-
-try:
-    from ApplicationServices import (
-        AXUIElementCopyAttributeValue,
-        AXUIElementCopyAttributeNames,
-        AXUIElementCreateApplication,
-        AXUIElementCreateSystemWide,
-        AXValueGetValue,
-        kAXValueTypeCGPoint,
-        kAXValueTypeCGSize,
-    )
-    from Cocoa import (
-        NSApplicationActivationPolicyRegular,
-        NSWorkspace,
-    )
-except ImportError as import_error:
-    logger.error(f"Failed to import required macOS frameworks: {import_error}")
-    raise
-
-AXUIElementRef = Any
-
-
-class PointDictionary(TypedDict):
-    x: float
-    y: float
-
-
-class SizeDictionary(TypedDict):
-    width: float
-    height: float
 
 
 def find_articles(starting_element: AXUIElementRef, maximum_depth: int = 10) -> list[AXUIElementRef]:
