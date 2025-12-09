@@ -153,6 +153,10 @@ from atlas.accessibility.api import (
     ax_get_running_applications,
     ax_get_valid_windows,
     ax_get_focused_element,
+    # UI interaction
+    ax_get_action_names,
+    ax_perform_action,
+    ax_set_attribute,
 )
 
 from atlas.accessibility.search import (
@@ -365,6 +369,9 @@ __all__ = [
     "ax_get_running_applications",
     "ax_get_valid_windows",
     "ax_get_focused_element",
+    "ax_get_action_names",
+    "ax_perform_action",
+    "ax_set_attribute",
     # Search functions
     "traverse_with_predicate",
     "find_by_predicate",

@@ -31,6 +31,9 @@ try:
         AXUIElementCopyAttributeNames,
         AXUIElementCopyParameterizedAttributeValue,
         AXUIElementCopyParameterizedAttributeNames,
+        AXUIElementCopyActionNames,
+        AXUIElementPerformAction,
+        AXUIElementSetAttributeValue,
         AXUIElementCreateApplication,
         AXUIElementCreateSystemWide,
         kAXChildrenAttribute,
@@ -38,6 +41,12 @@ try:
         kAXValueTypeCGPoint,
         kAXValueTypeCGSize,
         kAXValueTypeCFRange,
+        kAXErrorSuccess,
+        kAXErrorActionUnsupported,
+        kAXErrorAttributeUnsupported,
+        kAXErrorInvalidUIElement,
+        kAXErrorCannotComplete,
+        kAXErrorNotImplemented,
     )
     from Cocoa import (
         NSApplicationActivationPolicyRegular,
@@ -48,6 +57,30 @@ try:
 except ImportError as import_error:
     logger.error(f"Failed to import required macOS frameworks: {import_error}")
     raise
+
+
+# =============================================================================
+# ERROR CODE MAPPING
+# =============================================================================
+
+AX_ERROR_NAMES: dict[int, str] = {
+    0: "kAXErrorSuccess",
+    -25200: "kAXErrorFailure",
+    -25201: "kAXErrorIllegalArgument",
+    -25202: "kAXErrorInvalidUIElement",
+    -25203: "kAXErrorInvalidUIElementObserver",
+    -25204: "kAXErrorCannotComplete",
+    -25205: "kAXErrorAttributeUnsupported",
+    -25206: "kAXErrorActionUnsupported",
+    -25207: "kAXErrorNotificationUnsupported",
+    -25208: "kAXErrorNotImplemented",
+    -25209: "kAXErrorNotificationAlreadyRegistered",
+    -25210: "kAXErrorNotificationNotRegistered",
+    -25211: "kAXErrorAPIDisabled",
+    -25212: "kAXErrorNoValue",
+    -25213: "kAXErrorParameterizedAttributeUnsupported",
+    -25214: "kAXErrorNotEnoughPrecision",
+}
 
 
 # =============================================================================
@@ -466,3 +499,72 @@ def ax_get_focused_element() -> AXUIElementRef | None:
     """
     system_wide: AXUIElementRef = ax_create_system_wide_element()
     return ax_get_attribute(system_wide, "AXFocusedUIElement")
+
+
+# =============================================================================
+# UI INTERACTION
+# =============================================================================
+
+
+def ax_get_action_names(element: AXUIElementRef) -> list[str]:
+    """Get all available action names for an accessibility element.
+
+    Common actions include:
+    - AXPress: Click/activate the element
+    - AXIncrement/AXDecrement: For sliders, steppers
+    - AXConfirm/AXCancel: For dialogs
+    - AXShowMenu: Show context menu
+    - AXPick: Select an item
+    - AXRaise: Bring window to front
+
+    Args:
+        element: The accessibility element to query
+
+    Returns:
+        List of action names, or empty list if unavailable
+    """
+    error_code: int
+    names: Any
+    error_code, names = AXUIElementCopyActionNames(element, None)
+    return list(names) if error_code == 0 else []
+
+
+def ax_perform_action(element: AXUIElementRef, action_name: str) -> bool:
+    """Perform an action on an accessibility element.
+
+    Args:
+        element: The accessibility element to act on
+        action_name: Name of the action (e.g., "AXPress", "AXShowMenu")
+
+    Returns:
+        True if the action was performed successfully, False otherwise
+    """
+    error_code: int = AXUIElementPerformAction(element, action_name)
+    if error_code != 0:
+        error_name: str = AX_ERROR_NAMES.get(error_code, f"Unknown error {error_code}")
+        logger.debug(f"ax_perform_action failed: {error_name}")
+    return error_code == 0
+
+
+def ax_set_attribute(element: AXUIElementRef, attribute_name: str, value: Any) -> bool:
+    """Set an attribute value on an accessibility element.
+
+    Common settable attributes:
+    - AXFocused: Set keyboard focus (bool)
+    - AXValue: Set element value (str for text fields, bool for checkboxes)
+    - AXSelected: Set selection state (bool)
+    - AXSelectedTextRange: Set text selection (CFRange)
+
+    Args:
+        element: The accessibility element to modify
+        attribute_name: Name of the attribute to set
+        value: The value to set
+
+    Returns:
+        True if successful, False otherwise
+    """
+    error_code: int = AXUIElementSetAttributeValue(element, attribute_name, value)
+    if error_code != 0:
+        error_name: str = AX_ERROR_NAMES.get(error_code, f"Unknown error {error_code}")
+        logger.debug(f"ax_set_attribute({attribute_name}) failed: {error_name}")
+    return error_code == 0
