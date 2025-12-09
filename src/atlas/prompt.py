@@ -1,24 +1,20 @@
+"""Module containing logic for interacting with an Atlas conversation's prompts."""
 
 from __future__ import annotations
 
-import json
-from pathlib import Path
 from typing import Any, TypedDict
+from typing import Generator
 
 from loguru import logger
 
-from atlas.accessibility import create_live_identifier_predicate
+from atlas.accessibility import ax_get_attribute
 from atlas.accessibility import find_live
-from atlas.accessibility import find_live_by_identifier
 from atlas.accessibility import find_live_by_subrole
 from atlas.accessibility import find_live_first
-from atlas.accessibility import find_live_innermost_web_area_with_title
 from atlas.accessibility.api import ax_get_children
 from atlas.accessibility.predicates import create_live_subrole_predicate
 from atlas.interface import get_atlas_ui
-from atlas.interface import get_atlas_web_areas
 from atlas.interface import get_atlas_window
-from atlas.search_dynamic_functional import ax_get_attribute
 
 
 try:
@@ -74,6 +70,7 @@ def is_ready_for_next_prompt(starting_element: AXUIElementRef) -> bool:
 
     heading_title: Any = ax_get_attribute(heading, "AXTitle")
     if str(heading_title) != "ChatGPT said:":
+        logger.info("Waiting for chatgpt response to begin")
         return False
 
     return find_copy_button(content) is not None
@@ -86,14 +83,9 @@ def find_copy_button(starting_element: AXUIElementRef) -> AXUIElementRef | None:
 
 def _is_copy_button(element: AXUIElementRef) -> bool:
     """Returns whether the passed element is the copy button."""
-    # identifier: Any | None = ax_get_attribute(element, "AXIdentifier")
-    # return str(identifier) != "copy:"
-    label: Any | None = ax_get_attribute(element, "AXLabel")
-    result: bool = str(label) == "Copy"
     role: Any | None = ax_get_attribute(element, "AXRole")
-    if result:
-        logger.info(f"_is_copy_button: {role=}")
-    return result
+    description: Any | None = ax_get_attribute(element, "AXDescription")
+    return role == "AXCheckBox" and description == "Copy"
 
 
 def is_prompt_loading() -> AXUIElementRef:
@@ -117,13 +109,23 @@ def is_prompt_loading() -> AXUIElementRef:
 
 
 def get_text(element: AXUIElementRef) -> str:
+    """Returns all text within the provided element exhaustively.
+
+    Does not account for formatting done through UI placement or images.
+    """
+    return "".join(_iter_text(element))
+
+
+def _iter_text(element: AXUIElementRef) -> Generator[str, None, None]:
     """Returns the text of the given element."""
     role: Any | None = ax_get_attribute(element, "AXRole")
-    if role is None:
-        return ""
-
-    value: Any | None = ax_get_attribute(element, "AXValue")
+    for child in ax_get_children(element):
+        yield from _iter_text(child)
+    if str(role) == "AXStaticText":
+        value: Any | None = ax_get_attribute(element, "AXValue")
+        yield str(value)
 
 
 if __name__ == "__main__":
     is_prompt_loading()
+    # print(get_text(get_atlas_ui()))
