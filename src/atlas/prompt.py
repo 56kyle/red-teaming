@@ -9,10 +9,15 @@ from loguru import logger
 
 from atlas.accessibility import AXUIElementRef
 from atlas.accessibility import ax_get_attribute
+from atlas.accessibility import ax_perform_action
+from atlas.accessibility import ax_set_attribute
 from atlas.accessibility import find_live
 from atlas.accessibility import find_live_by_subrole
 from atlas.accessibility import find_live_first
 from atlas.accessibility.api import ax_get_children
+from atlas.interface import get_atlas_main
+from atlas.interface import get_atlas_prompt_send_button
+from atlas.interface import get_atlas_prompt_text_entry
 from atlas.interface import get_atlas_ui
 from atlas.interface import get_atlas_window
 
@@ -61,6 +66,7 @@ def _is_article(element: AXUIElementRef) -> bool:
     role: Any | None = ax_get_attribute(element, "AXSubrole")
     return role == "AXDocumentArticle"
 
+
 def _get_latest_article(starting_element: AXUIElementRef) -> AXUIElementRef:
     """Returns the latest article in the live hierarchy."""
     articles: list[AXUIElementRef] = find_articles(starting_element)
@@ -95,6 +101,37 @@ def _iter_text(element: AXUIElementRef) -> Generator[str, None, None]:
     if str(role) == "AXStaticText":
         value: Any | None = ax_get_attribute(element, "AXValue")
         yield str(value)
+
+
+def send_prompt(value: str) -> AXUIElementRef:
+    """Sends the provided value as a prompt."""
+    atlas_root: AXUIElementRef = get_atlas_ui()
+    atlas_window: AXUIElementRef = get_atlas_window(atlas_root)
+    atlas_main: AXUIElementRef = get_atlas_main(atlas_window)
+    set_prompt_text(atlas_main, value=value)
+    press_send_prompt_button(atlas_main)
+
+
+def set_prompt_text(starting_element: AXUIElementRef, value: str) -> None:
+    """Finds the Atlas text area and sets its value directly."""
+    atlas_prompt_text_entry: AXUIElementRef | None = get_atlas_prompt_text_entry(starting_element)
+    if atlas_prompt_text_entry is None:
+        raise RuntimeError(f"Unable to find prompt text area within provided starting element: {starting_element}")
+
+    focus_result: bool = ax_set_attribute(atlas_prompt_text_entry, "AXFocused", True)
+    logger.debug(f"Focus result: {focus_result}")
+
+    value_result: bool = ax_set_attribute(atlas_prompt_text_entry, "AXValue", value)
+    logger.debug(f"Set value result: {value_result}")
+
+
+def press_send_prompt_button(starting_element: AXUIElementRef) -> None:
+    """Finds the prompt send button reference and presses it."""
+    atlas_prompt_send_button: AXUIElementRef | None = get_atlas_prompt_send_button(starting_element)
+    if atlas_prompt_send_button is None:
+        raise RuntimeError(f"Unable to find prompt button within provided starting element: {starting_element}")
+    press_result: bool = ax_perform_action(atlas_prompt_send_button, "AXPress")
+    logger.debug(f"Press result: {press_result}")
 
 
 if __name__ == "__main__":

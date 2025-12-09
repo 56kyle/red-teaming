@@ -8,9 +8,11 @@ from loguru import logger
 
 from atlas.accessibility import AXUIElementRef
 from atlas.accessibility import ApplicationInfo
+from atlas.accessibility import ax_get_action_names
 from atlas.accessibility import ax_get_attribute
 from atlas.accessibility import ax_get_attribute_names
 from atlas.accessibility import ax_perform_action
+from atlas.accessibility import ax_set_attribute
 from atlas.accessibility import find_live
 from atlas.accessibility import find_live_first
 
@@ -61,6 +63,17 @@ def get_atlas_window(app_element: AXUIElementRef) -> AXUIElementRef | None:
             pass
 
     return None
+
+
+def get_atlas_main(window_element: AXUIElementRef) -> AXUIElementRef:
+    """Returns the main atlas interface reference."""
+    return find_live_first(window_element, _is_atlas_main, maximum_depth=20)
+
+
+def _is_atlas_main(element: AXUIElementRef) -> bool:
+    """Returns whether the provided element is a main atlas interface reference."""
+    subrole: Any | None = ax_get_attribute(element, "AXSubrole")
+    return subrole == "AXLandmarkMain"
 
 
 def get_atlas_web_areas(starting_element: AXUIElementRef, maximum_depth: int = 15) -> list[AXUIElementRef]:
@@ -149,6 +162,30 @@ def _is_navigation_history_link(element: AXUIElementRef) -> bool:
     role: str | None = ax_get_attribute(element, "AXRole")
     url: str | None = ax_get_attribute(element, "AXURL")
     return role == "AXLink" and str(url).startswith("https://chatgpt.com/c/")
+
+
+def get_atlas_prompt_text_entry(starting_element: AXUIElementRef) -> AXUIElementRef | None:
+    """Returns the Atlas prompt entry reference."""
+    return find_live_first(starting_element, _is_atlas_prompt_text_entry, maximum_depth=25)
+
+
+def _is_atlas_prompt_text_entry(element: AXUIElementRef) -> bool:
+    """Returns True if the element is the Atlas prompt entry reference.`"""
+    dom_identifier: Any | None = ax_get_attribute(element, "AXDOMIdentifier")
+    if dom_identifier == "prompt-textarea":
+        return True
+    return str(dom_identifier) == "prompt-textarea"
+
+
+def get_atlas_prompt_send_button(starting_element: AXUIElementRef) -> AXUIElementRef:
+    """Returns the Atlas prompt send button reference."""
+    return find_live_first(starting_element, _is_atlas_prompt_send_button, maximum_depth=25)
+
+
+def _is_atlas_prompt_send_button(element: AXUIElementRef) -> bool:
+    """Returns True if the element is the Atlas prompt send button reference."""
+    dom_identifier: Any | None = ax_get_attribute(element, "AXDOMIdentifier")
+    return str(dom_identifier) == "composer-submit-button"
 
 
 if __name__ == "__main__":
