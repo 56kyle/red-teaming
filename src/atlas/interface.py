@@ -3,10 +3,10 @@
 from __future__ import annotations
 
 from typing import Any
-from typing import TypeAlias
 
 from loguru import logger
 
+from atlas.accessibility import AXUIElementRef
 from atlas.accessibility import ApplicationInfo
 from atlas.accessibility import ax_get_attribute
 from atlas.accessibility import ax_get_attribute_names
@@ -20,9 +20,6 @@ try:
 except ImportError as import_error:
     logger.error(f"Failed to import required macOS frameworks: {import_error}")
     raise
-
-
-AXUIElementRef: TypeAlias = Any
 
 
 def get_atlas_window(app_element: AXUIElementRef) -> AXUIElementRef | None:
