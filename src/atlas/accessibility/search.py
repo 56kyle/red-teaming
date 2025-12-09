@@ -384,15 +384,11 @@ def find_live(
 ) -> list[AXUIElementRef]:
     """Search the live accessibility hierarchy for all matching elements.
 
-    Unlike cached hierarchy searches, this queries the actual
-    accessibility tree which reflects current application state.
-
     Args:
         starting_element: Element to start search from
         predicate: Function that returns True for matching elements
         maximum_depth: Maximum depth to traverse
         current_depth: Current depth (internal use)
-        visited: Set of visited element hashes (internal use)
 
     Returns:
         List of all matching elements
@@ -434,7 +430,6 @@ def find_live_first(
         predicate: Function that returns True for matching elements
         maximum_depth: Maximum depth to traverse
         current_depth: Current depth (internal use)
-        visited: Set of visited element hashes (internal use)
 
     Returns:
         First matching element, or None if not found
