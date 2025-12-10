@@ -8,6 +8,7 @@ This module provides functions for searching both:
 from __future__ import annotations
 
 from typing import Any, Callable
+from typing import Generator
 
 from atlas.accessibility import ax_get_attribute
 from atlas.accessibility.constants import AXROLE_WEB_AREA
@@ -393,25 +394,25 @@ def find_live(
     Returns:
         List of all matching elements
     """
-    results: list[AXUIElementRef] = []
-    if current_depth >= maximum_depth:
-        return results
+    return list(_iter_live(starting_element, predicate, maximum_depth, current_depth))
 
+
+def _iter_live(
+    starting_element: AXUIElementRef,
+    predicate: Callable[[AXUIElementRef], bool],
+    maximum_depth: int = 10,
+    current_depth: int = 0,
+) -> Generator[AXUIElementRef, None, None]:
+    """Iterate through live accessibility hierarchy."""
     if predicate(starting_element):
-        results.append(starting_element)
-
+        yield starting_element
+    if current_depth >= maximum_depth:
+        return
     children: Any | None = ax_get_attribute(starting_element, "AXChildren")
-
-    if children:
-        try:
-            for i in range(len(children)):
-                results.extend(
-                    find_live(children[i], predicate, maximum_depth, current_depth + 1)
-                )
-        except TypeError:
-            pass
-
-    return results
+    if children is None:
+        return
+    for child in children:
+        yield from _iter_live(child, predicate, maximum_depth, current_depth + 1)
 
 
 def find_live_first(
@@ -434,8 +435,7 @@ def find_live_first(
     Returns:
         First matching element, or None if not found
     """
-    results: list[AXUIElementRef] = find_live(starting_element, predicate, maximum_depth, current_depth)
-    return results[0] if results else None
+    return next(_iter_live(starting_element, predicate, maximum_depth, current_depth))
 
 
 # Backward compatibility alias
