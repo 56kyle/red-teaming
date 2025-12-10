@@ -93,7 +93,7 @@ def _is_atlas_new_tab_button(element: AXUIElementRef) -> bool:
     return str(role) == "AXButton" and str(description) == "New Tab"
 
 
-def get_atlas_main(window_element: AXUIElementRef) -> AXUIElementRef:
+def get_atlas_main(window_element: AXUIElementRef) -> AXUIElementRef | None:
     """Returns the main atlas interface reference."""
     return find_live_first(window_element, _is_atlas_main, maximum_depth=20)
 
@@ -200,9 +200,8 @@ def get_atlas_prompt_text_entry(starting_element: AXUIElementRef) -> AXUIElement
 def _is_atlas_prompt_text_entry(element: AXUIElementRef) -> bool:
     """Returns True if the element is the Atlas prompt entry reference.`"""
     dom_identifier: Any | None = ax_get_attribute(element, "AXDOMIdentifier")
-    if dom_identifier == "prompt-textarea":
-        return True
-    return str(dom_identifier) == "prompt-textarea"
+    role_description: Any | None = ax_get_attribute(element, "AXRoleDescription")
+    return str(dom_identifier) == "prompt-textarea" or str(role_description) == "text entry area"
 
 
 def get_atlas_prompt_send_button(starting_element: AXUIElementRef) -> AXUIElementRef:
@@ -213,7 +212,20 @@ def get_atlas_prompt_send_button(starting_element: AXUIElementRef) -> AXUIElemen
 def _is_atlas_prompt_send_button(element: AXUIElementRef) -> bool:
     """Returns True if the element is the Atlas prompt send button reference."""
     dom_identifier: Any | None = ax_get_attribute(element, "AXDOMIdentifier")
-    return str(dom_identifier) == "composer-submit-button"
+    description: Any | None = ax_get_attribute(element, "AXDescription")
+    return str(dom_identifier) == "composer-submit-button" or str(description) == "Send"
+
+
+def get_atlas_prompt_stop_button(starting_element: AXUIElementRef) -> AXUIElementRef:
+    """Returns the Atlas prompt stop button reference."""
+    return find_live_first(starting_element, _is_atlas_prompt_stop_button)
+
+
+def _is_atlas_prompt_stop_button(element: AXUIElementRef) -> bool:
+    """Returns True if the element is the Atlas prompt stop button reference."""
+    description: Any | None = ax_get_attribute(element, "AXDescription")
+    dom_identifier: AXUIElementRef | None = ax_get_attribute(element, "AXDOMIdentifier")
+    return str(description) == "Stop streaming" and str(dom_identifier) == "composer-submit-button"
 
 
 if __name__ == "__main__":
