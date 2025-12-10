@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import time
 from typing import Any
 
 from loguru import logger
@@ -24,6 +25,9 @@ try:
 except ImportError as import_error:
     logger.error(f"Failed to import required macOS frameworks: {import_error}")
     raise
+
+
+DEFAULT_TAB_DELAY: float = 0.1
 
 
 def get_atlas_ui() -> AXUIElementRef:
@@ -63,6 +67,30 @@ def get_atlas_window(app_element: AXUIElementRef) -> AXUIElementRef | None:
             pass
 
     return None
+
+
+def focus_atlas_window(element: AXUIElementRef) -> AXUIElementRef:
+    """Focuses the atlas window reference."""
+    ax_perform_action(element, "AXRaise")
+
+
+def open_new_atlas_tab(starting_element: AXUIElementRef, delay: float = DEFAULT_TAB_DELAY) -> AXUIElementRef:
+    """Finds the Atlas tab button and presses it."""
+    new_tab_button: AXUIElementRef = get_atlas_new_tab_button(starting_element)
+    ax_perform_action(new_tab_button, "AXPress")
+    time.sleep(delay)
+
+
+def get_atlas_new_tab_button(starting_element: AXUIElementRef) -> AXUIElementRef:
+    """Returns the Atlas new tab button."""
+    return find_live_first(starting_element, _is_atlas_new_tab_button, maximum_depth=20)
+
+
+def _is_atlas_new_tab_button(element: AXUIElementRef) -> bool:
+    """Returns True if the provided element is the new tab button."""
+    role: Any | None = ax_get_attribute(element, "AXRole")
+    description: Any | None = ax_get_attribute(element, "AXDescription")
+    return str(role) == "AXButton" and str(description) == "New Tab"
 
 
 def get_atlas_main(window_element: AXUIElementRef) -> AXUIElementRef:
@@ -191,7 +219,12 @@ def _is_atlas_prompt_send_button(element: AXUIElementRef) -> bool:
 if __name__ == "__main__":
     atlas_root: AXUIElementRef = get_atlas_ui()
     atlas_window: AXUIElementRef = get_atlas_window(atlas_root)
-    sidebar: AXUIElementRef = get_atlas_sidebar(atlas_window)
-    links: list[str] = get_sidebar_conversation_links(sidebar)
-    logger.info(links)
+    new_tab_button: AXUIElementRef = get_atlas_new_tab_button(atlas_window)
+    logger.info(new_tab_button)
+    logger.info(ax_get_action_names(new_tab_button))
+    ax_perform_action(new_tab_button, "AXPress")
+
+    # sidebar: AXUIElementRef = get_atlas_sidebar(atlas_window)
+    # links: list[str] = get_sidebar_conversation_links(sidebar)
+    # logger.info(links)
 

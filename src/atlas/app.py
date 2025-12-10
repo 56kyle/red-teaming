@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import subprocess
+import sys
 import time
 from typing import Any
 from loguru import logger
@@ -19,6 +20,9 @@ try:
 except ImportError as import_error:
     logger.error(f"Failed to import required macOS frameworks: {import_error}")
     raise
+
+
+_WINDOW_FOCUS_DELAY_SECONDS: float = 0.5
 
 
 def get_or_create_atlas_application(timeout: float = 5) -> ApplicationInfo:
@@ -86,6 +90,33 @@ def _get_running_applications_with_regular_activation_policy() -> list[Applicati
             application_info_list.append(application_info)
 
     return application_info_list
+
+
+def focus_browser_window() -> None:
+    """Focus the browser window to prepare it for keyboard input.
+
+    On macOS, uses osascript to bring the ChatGPT Atlas application to the foreground.
+    On other platforms, relies on system window management.
+    """
+    if "darwin" in sys.platform:
+        try:
+            applescript: str = 'tell application "ChatGPT Atlas" to activate'
+            subprocess.run(
+                ["osascript", "-e", applescript],
+                check=True,
+                capture_output=True,
+                timeout=5,
+            )
+            logger.debug("Browser window focused via osascript")
+            time.sleep(_WINDOW_FOCUS_DELAY_SECONDS)
+        except subprocess.CalledProcessError as e:
+            logger.warning(f"Failed to focus window via osascript: {e}")
+        except FileNotFoundError:
+            logger.warning("osascript not found; cannot focus window")
+        except subprocess.TimeoutExpired:
+            logger.warning("osascript command timed out")
+    else:
+        logger.debug(f"Window focusing not implemented for platform: {sys.platform}")
 
 
 if __name__ == "__main__":

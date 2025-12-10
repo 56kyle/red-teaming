@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import time
 from typing import Any
 from typing import Generator
 
@@ -20,6 +21,9 @@ from atlas.interface import get_atlas_prompt_send_button
 from atlas.interface import get_atlas_prompt_text_entry
 from atlas.interface import get_atlas_ui
 from atlas.interface import get_atlas_window
+
+
+DEFAULT_PROMPT_TIMEOUT: float = 60.0
 
 
 def is_prompt_loading() -> AXUIElementRef:
@@ -103,13 +107,17 @@ def _iter_text(element: AXUIElementRef) -> Generator[str, None, None]:
         yield str(value)
 
 
-def send_prompt(value: str) -> AXUIElementRef:
+def send_prompt(value: str, timeout: float = DEFAULT_PROMPT_TIMEOUT) -> AXUIElementRef:
     """Sends the provided value as a prompt."""
     atlas_root: AXUIElementRef = get_atlas_ui()
     atlas_window: AXUIElementRef = get_atlas_window(atlas_root)
     atlas_main: AXUIElementRef = get_atlas_main(atlas_window)
     set_prompt_text(atlas_main, value=value)
     press_send_prompt_button(atlas_main)
+    send_time: float = time.time()
+    while is_prompt_loading():
+        if time.time() - send_time > timeout:
+            raise TimeoutError(f"Timed out while waiting for prompt to load for {timeout} seconds.")
 
 
 def set_prompt_text(starting_element: AXUIElementRef, value: str) -> None:
