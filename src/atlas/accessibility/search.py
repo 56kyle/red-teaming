@@ -435,7 +435,9 @@ def find_live_first(
     Returns:
         First matching element, or None if not found
     """
-    return next(_iter_live(starting_element, predicate, maximum_depth, current_depth))
+    for result in _iter_live(starting_element, predicate, maximum_depth, current_depth):
+        return result
+    return None
 
 
 # Backward compatibility alias
