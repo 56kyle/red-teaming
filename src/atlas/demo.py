@@ -1,8 +1,10 @@
 """Module containing logic for demoing a red teaming example."""
 import json
 from pathlib import Path
+from typing import Optional
 
 import pyperclip
+from loguru import logger
 from openai.types.conversations import ItemCreateParams
 from openai.types.responses.response_input_item_param import Message
 from openai.types.responses.response_input_param import ResponseInputItemParam
@@ -10,6 +12,27 @@ from openai.types.responses.response_input_param import ResponseInputItemParam
 from atlas._typing import PlannedConversation
 from atlas.constants import DATA_FOLDER
 from atlas.parse import parse_user_messages_from_raw_copied_text
+
+
+def get_user_messages_from_conversation(path: Path) -> Optional[list[ResponseInputItemParam]]:
+    """Loads all user messages from a conversation."""
+    logger.info("Loading planned conversation from file")
+    params: ItemCreateParams = load_planned_conversation(path=path)
+    items: list[ResponseInputItemParam] = list(params.get("items", []))
+
+    if not items:
+        logger.warning("No conversation items found in file")
+        return None
+
+    user_messages: list[ResponseInputItemParam] = _filter_user_messages(items)
+    return user_messages
+
+
+def _filter_user_messages(items: list[ResponseInputItemParam]) -> list[ResponseInputItemParam]:
+    """Filter items to only include messages with role='user'."""
+    user_messages: list[ResponseInputItemParam] = [item for item in items if item.get("role") == "user"]
+    logger.debug(f"Filtered {len(items)} items to {len(user_messages)} user messages")
+    return user_messages
 
 
 def save_planned_conversation(path: Path, messages: list[Message]) -> None:
