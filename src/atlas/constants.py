@@ -6,6 +6,7 @@ from pathlib import Path
 
 from platformdirs import user_cache_path
 from platformdirs import user_config_path
+from platformdirs import user_data_path
 from platformdirs import user_log_path
 from pydantic import ConfigDict
 
@@ -24,8 +25,9 @@ USER_LOG_FOLDER: Path = user_log_path(appname=APP_NAME, appauthor=APP_AUTHOR, en
 
 ATLAS_APP_NAME: str = "com.openai.atlas"
 ATLAS_APP_AUTHOR: str = "openai"
-ATLAS_CACHE_FOLDER: Path = user_cache_path(appname=ATLAS_APP_NAME, appauthor=ATLAS_APP_AUTHOR)
+ATLAS_CACHE_FOLDER: Path = user_cache_path(appname=APP_NAME, appauthor=APP_AUTHOR)
 ATLAS_CONFIG_FOLDER: Path = user_config_path(appname=ATLAS_APP_NAME, appauthor=ATLAS_APP_AUTHOR)
+ATLAS_DATA_FOLDER: Path = user_data_path(appname=ATLAS_APP_NAME, appauthor=ATLAS_APP_AUTHOR)
 
 ATLAS_APP_EXECUTABLE_PATH: Path = Path("/Applications/ChatGPT Atlas.app/Contents/MacOS/ChatGPT Atlas")
 
