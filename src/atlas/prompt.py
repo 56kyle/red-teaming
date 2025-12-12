@@ -21,6 +21,7 @@ from atlas.accessibility.api import ax_get_children
 from atlas.hierarchy_broad import save_state
 from atlas.interface import _get_atlas_main
 from atlas.interface import get_atlas_main
+from atlas.interface import get_atlas_main_or_window
 from atlas.interface import get_atlas_prompt_send_button
 from atlas.interface import get_atlas_prompt_stop_button
 from atlas.interface import get_atlas_prompt_text_entry
@@ -41,7 +42,7 @@ def is_prompt_loading() -> AXUIElementRef:
     if atlas_window is None:
         raise ValueError("Failed to find atlas window")
 
-    atlas_main: AXUIElementRef | None = find_live_by_subrole(atlas_window, "AXLandmarkMain", maximum_depth=25)
+    atlas_main: AXUIElementRef | None = find_live_by_subrole(atlas_window, "AXLandmarkMain", maximum_depth=30)
     if atlas_main is None:
         return True
 
@@ -69,12 +70,9 @@ def is_ready_to_submit_text_entry() -> bool:
 
 def is_ready_for_next_prompt() -> bool:
     """Returns whether the article is loading or not."""
-    atlas_main: AXUIElementRef | None = get_atlas_main()
-    if atlas_main is None:
-        logger.debug(f"Failed to find atlas main window")
-        return False
+    closest_element: AXUIElementRef = get_atlas_main_or_window()
 
-    articles: list[AXUIElementRef] = find_articles(atlas_main)
+    articles: list[AXUIElementRef] = find_articles(closest_element)
     if len(articles) == 0:
         logger.debug(f"Failed to find any articles")
         return False
@@ -83,11 +81,11 @@ def is_ready_for_next_prompt() -> bool:
     if copy_button is None:
         return False
 
-    composer_stop_button: AXUIElementRef | None = get_atlas_prompt_stop_button(atlas_main)
+    composer_stop_button: AXUIElementRef | None = get_atlas_prompt_stop_button(closest_element)
     return composer_stop_button is None
 
 
-def find_articles(starting_element: AXUIElementRef, maximum_depth: int = 20) -> list[AXUIElementRef]:
+def find_articles(starting_element: AXUIElementRef, maximum_depth: int = 30) -> list[AXUIElementRef]:
     """Find all articles in the live hierarchy."""
     return find_live(starting_element, _is_article, maximum_depth)
 
@@ -100,10 +98,8 @@ def _is_article(element: AXUIElementRef) -> bool:
 
 def get_latest_article() -> AXUIElementRef | None:
     """Returns the latest article in the live hierarchy."""
-    atlas_main: AXUIElementRef | None = get_atlas_main()
-    if atlas_main is None:
-        return None
-    return _get_latest_article(atlas_main)
+    closest_element: AXUIElementRef = get_atlas_main_or_window()
+    return _get_latest_article(closest_element)
 
 
 def _get_latest_article(starting_element: AXUIElementRef) -> AXUIElementRef | None:

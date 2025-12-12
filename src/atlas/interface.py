@@ -301,16 +301,13 @@ def _is_atlas_prompt_stop_button(element: AXUIElementRef) -> bool:
 
 def get_atlas_thread_bottom() -> AXUIElementRef | None:
     """Gets the Atlas reference that contains the text entry and submit button during extended prompts."""
-
-    atlas_main: AXUIElementRef | None = get_atlas_main()
-    if atlas_main is None:
-        return None
-    return _get_atlas_thread_bottom(atlas_main)
+    closest_element: AXUIElementRef = get_atlas_main_or_window()
+    return _get_atlas_thread_bottom(closest_element)
 
 
 def _get_atlas_thread_bottom(main_element: AXUIElementRef) -> AXUIElementRef | None:
     """Gets the Atlas reference that contains the text entry and submit button during extended prompts."""
-    return find_live_first(main_element, _is_atlas_thread_bottom, maximum_depth=20)
+    return find_live_first(main_element, _is_atlas_thread_bottom, maximum_depth=30)
 
 
 def _is_atlas_thread_bottom(element: AXUIElementRef) -> bool:
