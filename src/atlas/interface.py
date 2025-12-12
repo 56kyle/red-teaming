@@ -256,7 +256,13 @@ def _is_atlas_prompt_text_entry(element: AXUIElementRef) -> bool:
     return str(dom_identifier) == "prompt-textarea" or str(role_description) == "text entry area"
 
 
-def get_atlas_prompt_send_button(starting_element: AXUIElementRef) -> AXUIElementRef:
+def get_atlas_prompt_send_button() -> AXUIElementRef | None:
+    """Returns the Atlas prompt send button reference."""
+    closest_element: AXUIElementRef = get_atlas_main_or_window()
+    return _get_atlas_prompt_send_button(closest_element)
+
+
+def _get_atlas_prompt_send_button(starting_element: AXUIElementRef) -> AXUIElementRef | None:
     """Returns the Atlas prompt send button reference."""
     return find_live_first(starting_element, _is_atlas_prompt_send_button, maximum_depth=25)
 
