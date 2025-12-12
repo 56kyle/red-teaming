@@ -717,6 +717,7 @@ def save_state(name: str) -> None:
         f"Successfully exported hierarchy for '{matching_application['name']}' to {output_file_path.resolve()}"
     )
 
+
 def main() -> None:
     """Main entry point for the accessibility hierarchy inspector."""
     save_state("hierarchy_sidebar")
