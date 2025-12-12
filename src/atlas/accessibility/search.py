@@ -7,27 +7,27 @@ This module provides functions for searching both:
 
 from __future__ import annotations
 
-from typing import Any, Callable
+from typing import Any
+from typing import Callable
 from typing import Generator
 
 from atlas.accessibility import ax_get_attribute
+from atlas.accessibility._types import AXUIElementRef
+from atlas.accessibility._types import AccessibilityElementDict
+from atlas.accessibility._types import SearchResult
 from atlas.accessibility.constants import AXROLE_WEB_AREA
+from atlas.accessibility.predicates import create_attribute_predicate
+from atlas.accessibility.predicates import create_identifier_predicate
+from atlas.accessibility.predicates import create_live_identifier_predicate
+from atlas.accessibility.predicates import create_live_role_predicate
 from atlas.accessibility.predicates import create_live_subrole_predicate
-from atlas.accessibility.predicates import (
-    create_role_predicate,
-    create_subrole_predicate,
-    create_title_predicate,
-    create_identifier_predicate,
-    create_value_predicate,
-    create_attribute_predicate,
-    create_live_role_predicate,
-    create_live_title_predicate,
-    create_live_identifier_predicate,
-    has_url,
-    is_interactive,
-)
-from atlas.accessibility.pure import element_hash
-from atlas.accessibility._types import AccessibilityElementDict, AXUIElementRef, SearchResult
+from atlas.accessibility.predicates import create_live_title_predicate
+from atlas.accessibility.predicates import create_role_predicate
+from atlas.accessibility.predicates import create_subrole_predicate
+from atlas.accessibility.predicates import create_title_predicate
+from atlas.accessibility.predicates import create_value_predicate
+from atlas.accessibility.predicates import has_url
+from atlas.accessibility.predicates import is_interactive
 
 
 # =============================================================================

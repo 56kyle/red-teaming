@@ -8,13 +8,15 @@ pure functions.
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any
 
 from loguru import logger
 
+from atlas.accessibility._types import AccessibilityElementDict
+from atlas.accessibility._types import ApplicationInfo
+from atlas.accessibility._types import ConversionConfig
 from atlas.accessibility.conversion import convert_application
-from atlas.accessibility.pure import serialize_to_json, deserialize_from_json
-from atlas.accessibility._types import AccessibilityElementDict, ApplicationInfo, ConversionConfig
+from atlas.accessibility.pure import deserialize_from_json
+from atlas.accessibility.pure import serialize_to_json
 
 
 # =============================================================================

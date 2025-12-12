@@ -12,8 +12,8 @@ from openai.types.responses.response_input_item_param import Message
 from atlas._typing import PlannedConversation
 from atlas.accessibility import AXUIElementRef
 from atlas.constants import DATA_FOLDER
-from atlas.interface import get_atlas_ui
 from atlas.interface import _get_atlas_window
+from atlas.interface import get_atlas_ui
 from atlas.interface import open_new_atlas_tab
 from atlas.parse import parse_user_messages_from_raw_copied_text
 from atlas.prompt import send_prompt

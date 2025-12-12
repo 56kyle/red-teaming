@@ -10,12 +10,15 @@ Two types of predicates are provided:
 
 from __future__ import annotations
 
-from typing import Any, Callable
+from typing import Any
+from typing import Callable
 
+from atlas.accessibility._types import AXUIElementRef
+from atlas.accessibility._types import AccessibilityElementDict
 from atlas.accessibility.api import ax_get_attribute
-from atlas.accessibility.constants import INTERACTIVE_ROLES, AXROLE_WEB_AREA
+from atlas.accessibility.constants import AXROLE_WEB_AREA
+from atlas.accessibility.constants import INTERACTIVE_ROLES
 from atlas.accessibility.pure import normalize_for_comparison
-from atlas.accessibility._types import AccessibilityElementDict, AXUIElementRef
 
 
 # =============================================================================

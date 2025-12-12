@@ -1,9 +1,7 @@
 """Module for working with the OpenAI API in a manner convenient to the atlas package."""
 import os
-from pathlib import Path
 
 from openai import Client
-from openai import responses
 from openai.types.conversations import Conversation
 
 

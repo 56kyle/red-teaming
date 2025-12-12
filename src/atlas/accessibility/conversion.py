@@ -9,24 +9,21 @@ from __future__ import annotations
 from typing import Any
 
 from atlas.accessibility import ax_get_element_at_position
-from atlas.accessibility.api import (
-    ax_get_attribute,
-    ax_get_attribute_names,
-    ax_get_parameterized_attribute_names,
-    ax_create_application_element,
-    ax_create_system_wide_element,
-    ax_extract_point,
-    ax_extract_size,
-    ax_get_valid_windows,
-)
-from atlas.accessibility.pure import coerce_to_string, element_hash
-from atlas.accessibility._types import (
-    AccessibilityElementDict,
-    AXUIElementRef,
-    ConversionConfig,
-    PointDict,
-    SizeDict,
-)
+from atlas.accessibility._types import AXUIElementRef
+from atlas.accessibility._types import AccessibilityElementDict
+from atlas.accessibility._types import ConversionConfig
+from atlas.accessibility._types import PointDict
+from atlas.accessibility._types import SizeDict
+from atlas.accessibility.api import ax_create_application_element
+from atlas.accessibility.api import ax_create_system_wide_element
+from atlas.accessibility.api import ax_extract_point
+from atlas.accessibility.api import ax_extract_size
+from atlas.accessibility.api import ax_get_attribute
+from atlas.accessibility.api import ax_get_attribute_names
+from atlas.accessibility.api import ax_get_parameterized_attribute_names
+from atlas.accessibility.api import ax_get_valid_windows
+from atlas.accessibility.pure import coerce_to_string
+from atlas.accessibility.pure import element_hash
 
 
 def convert_element(

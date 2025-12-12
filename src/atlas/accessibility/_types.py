@@ -3,7 +3,8 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, TypedDict
+from typing import Any
+from typing import TypedDict
 
 
 # Type alias for the opaque AXUIElement reference from macOS

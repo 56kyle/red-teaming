@@ -5,6 +5,7 @@ import subprocess
 import sys
 import time
 from typing import Any
+
 from loguru import logger
 
 from atlas.accessibility import ApplicationInfo

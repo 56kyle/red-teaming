@@ -17,12 +17,12 @@ from atlas.accessibility import find_live
 from atlas.accessibility import find_live_by_subrole
 from atlas.accessibility import find_live_first
 from atlas.accessibility.api import ax_get_children
+from atlas.interface import _get_atlas_window
 from atlas.interface import get_atlas_main_or_window
 from atlas.interface import get_atlas_prompt_send_button
 from atlas.interface import get_atlas_prompt_stop_button
 from atlas.interface import get_atlas_prompt_text_entry
 from atlas.interface import get_atlas_ui
-from atlas.interface import _get_atlas_window
 from atlas.interface import press_enter_in_atlas
 
 

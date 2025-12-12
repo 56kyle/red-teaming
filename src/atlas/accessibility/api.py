@@ -14,14 +14,12 @@ from typing import Optional
 
 from loguru import logger
 
-from atlas.accessibility._types import (
-    AXUIElementRef,
-    PointDict,
-    SizeDict,
-    RangeDict,
-    BoundsDict,
-    ApplicationInfo,
-)
+from atlas.accessibility._types import AXUIElementRef
+from atlas.accessibility._types import ApplicationInfo
+from atlas.accessibility._types import BoundsDict
+from atlas.accessibility._types import PointDict
+from atlas.accessibility._types import RangeDict
+from atlas.accessibility._types import SizeDict
 
 
 try:

@@ -1,7 +1,6 @@
 """Module containing constants used throughout the atlas package."""
 
 import datetime
-
 from pathlib import Path
 
 from platformdirs import user_cache_path

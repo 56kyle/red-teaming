@@ -3,10 +3,7 @@ import re
 from pathlib import Path
 from typing import Pattern
 
-import pyperclip
-from openai.types.conversations import Conversation
 from openai.types.responses import ResponseInputTextParam
-
 from openai.types.responses.response_input_item_param import Message
 
 from atlas.constants import DATA_FOLDER

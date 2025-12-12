@@ -5,7 +5,8 @@ from __future__ import annotations
 import json
 from typing import Any
 
-from atlas.accessibility._types import AccessibilityElementDict, AXUIElementRef
+from atlas.accessibility._types import AXUIElementRef
+from atlas.accessibility._types import AccessibilityElementDict
 
 
 # =============================================================================

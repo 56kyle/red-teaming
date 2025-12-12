@@ -14,7 +14,6 @@ from atlas.accessibility import ax_get_attribute_names
 from atlas.accessibility import ax_perform_action
 from atlas.accessibility import find_live
 from atlas.accessibility import find_live_first
-
 from atlas.app import get_or_create_atlas_application
 
 
