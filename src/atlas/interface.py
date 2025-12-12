@@ -9,11 +9,9 @@ from loguru import logger
 
 from atlas.accessibility import AXUIElementRef
 from atlas.accessibility import ApplicationInfo
-from atlas.accessibility import ax_get_action_names
 from atlas.accessibility import ax_get_attribute
 from atlas.accessibility import ax_get_attribute_names
 from atlas.accessibility import ax_perform_action
-from atlas.accessibility import ax_set_attribute
 from atlas.accessibility import find_live
 from atlas.accessibility import find_live_first
 
@@ -30,8 +28,6 @@ try:
 except ImportError as import_error:
     logger.error(f"Failed to import required macOS frameworks: {import_error}")
     raise
-
-
 
 DEFAULT_TAB_DELAY: float = 0.5
 
@@ -335,4 +331,3 @@ if __name__ == "__main__":
         atlas_root: AXUIElementRef = get_atlas_ui()
         atlas_window: AXUIElementRef = _get_atlas_window(atlas_root)
         logger.info(get_atlas_prompt_stop_button(atlas_window))
-
