@@ -15,7 +15,7 @@ from pynput.keyboard import KeyCode
 
 from atlas.constants import ATLAS_APP_EXECUTABLE_PATH
 from atlas.constants import DATA_FOLDER
-from atlas.demo import get_user_messages_from_conversation
+from atlas.conversation import get_user_messages_from_conversation
 
 
 # Constants for wait strategies
