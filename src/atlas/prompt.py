@@ -16,21 +16,22 @@ from atlas.accessibility import find_live
 from atlas.accessibility import find_live_by_subrole
 from atlas.accessibility import find_live_first
 from atlas.accessibility.api import ax_get_children
-from atlas.interface import get_atlas_main
+from atlas.interface import _get_atlas_main
+from atlas.interface import get_atlas_main_or_window
 from atlas.interface import get_atlas_prompt_send_button
 from atlas.interface import get_atlas_prompt_stop_button
-from atlas.interface import get_atlas_prompt_text_entry
+from atlas.interface import _get_atlas_prompt_text_entry
 from atlas.interface import get_atlas_ui
-from atlas.interface import get_atlas_window
+from atlas.interface import _get_atlas_window
 
-DEFAULT_PROMPT_CHECK_DELAY: float = 0.5
+DEFAULT_PROMPT_CHECK_DELAY: float = 0.3
 DEFAULT_PROMPT_TIMEOUT: float = 60.0
 
 
 def is_prompt_loading() -> AXUIElementRef:
     """Returns whether the latest atlas non-user prompt is still in progress of generation."""
     atlas_root: AXUIElementRef = get_atlas_ui()
-    atlas_window: AXUIElementRef | None = get_atlas_window(atlas_root)
+    atlas_window: AXUIElementRef | None = _get_atlas_window(atlas_root)
     if atlas_window is None:
         raise ValueError("Failed to find atlas window")
 
@@ -39,33 +40,54 @@ def is_prompt_loading() -> AXUIElementRef:
         return True
 
     composer_stop_button: AXUIElementRef | None = get_atlas_prompt_stop_button(atlas_main)
+
     return composer_stop_button is not None
 
 
-def _is_ready_for_next_prompt(starting_element: AXUIElementRef) -> bool:
-    """Returns whether the article is loading or not.
-
-    Expects the starting element to be the main landmark present when not in a sidebar / etc.
-    """
-    latest_article: AXUIElementRef = _get_latest_article(starting_element)
-    if latest_article is None:
+def is_ready_to_submit_text_entry() -> bool:
+    """Returns whether Atlas is ready to submit the current text entry."""
+    closest_element: AXUIElementRef = get_atlas_main_or_window()
+    text_entry: AXUIElementRef | None = _get_atlas_prompt_text_entry(closest_element)
+    if text_entry is None:
         return False
 
-    children: list[AXUIElementRef] = ax_get_children(latest_article)
-    if len(children) != 2:
-        raise ValueError(f"Article has unexpected number of children: {len(children)}")
-    heading: AXUIElementRef = children[0]
-    content: AXUIElementRef = children[1]
-
-    heading_title: Any = ax_get_attribute(heading, "AXTitle")
-    if str(heading_title) != "ChatGPT said:":
-        logger.info("Waiting for chatgpt response to begin")
+    text_value: Any | None = ax_get_attribute(text_entry, "AXValue")
+    if text_value is None:
         return False
 
-    return _find_copy_button(content) is not None
+    submit_button: AXUIElementRef | None = get_atlas_prompt_send_button(closest_element)
+    if submit_button is None:
+        return False
+
+    return True
 
 
-def find_articles(starting_element: AXUIElementRef, maximum_depth: int = 10) -> list[AXUIElementRef]:
+def is_ready_for_next_prompt() -> bool:
+    """Returns whether the article is loading or not."""
+    atlas_root: AXUIElementRef = get_atlas_ui()
+    atlas_window: AXUIElementRef | None = _get_atlas_window(atlas_root)
+    if atlas_window is None:
+        raise ValueError("Failed to find atlas window")
+
+    atlas_main: AXUIElementRef | None = _get_atlas_main(atlas_window)
+    if atlas_main is None:
+        logger.debug(f"Failed to find atlas main window")
+        return False
+
+    articles: list[AXUIElementRef] = find_articles(atlas_main)
+    if len(articles) == 0:
+        logger.debug(f"Failed to find any articles")
+        return False
+
+    copy_button: AXUIElementRef | None = _find_copy_button(articles[-1])
+    if copy_button is None:
+        return False
+
+    composer_stop_button: AXUIElementRef | None = get_atlas_prompt_stop_button(atlas_main)
+    return composer_stop_button is None
+
+
+def find_articles(starting_element: AXUIElementRef, maximum_depth: int = 20) -> list[AXUIElementRef]:
     """Find all articles in the live hierarchy."""
     return find_live(starting_element, _is_article, maximum_depth)
 
@@ -117,19 +139,20 @@ def _iter_text(element: AXUIElementRef) -> Generator[str, None, None]:
 def send_prompt(value: str, timeout: float = DEFAULT_PROMPT_TIMEOUT) -> AXUIElementRef:
     """Sends the provided value as a prompt."""
     set_prompt_text(value)
-    time.sleep(.01)
+    while not is_ready_to_submit_text_entry():
+        pass
     press_send_prompt_button()
     time.sleep(DEFAULT_PROMPT_CHECK_DELAY)
     send_time: float = time.time()
-    while is_prompt_loading():
+    while not is_ready_for_next_prompt():
         if time.time() - send_time > timeout:
             raise TimeoutError(f"Timed out while waiting for prompt to load for {timeout} seconds.")
 
 
 def set_prompt_text(value: str) -> None:
     """Finds the Atlas text area and sets its value directly."""
-    starting_element: AXUIElementRef = _get_atlas_main_or_window()
-    atlas_prompt_text_entry: AXUIElementRef | None = get_atlas_prompt_text_entry(starting_element)
+    starting_element: AXUIElementRef = get_atlas_main_or_window()
+    atlas_prompt_text_entry: AXUIElementRef | None = _get_atlas_prompt_text_entry(starting_element)
     if atlas_prompt_text_entry is None:
         raise RuntimeError(f"Unable to find prompt text area within provided starting element: {starting_element}")
 
@@ -142,22 +165,24 @@ def set_prompt_text(value: str) -> None:
 
 def press_send_prompt_button() -> None:
     """Finds the prompt send button reference and presses it."""
-    starting_element: AXUIElementRef = _get_atlas_main_or_window()
+    starting_element: AXUIElementRef = get_atlas_main_or_window()
     atlas_prompt_send_button: AXUIElementRef | None = get_atlas_prompt_send_button(starting_element)
     if atlas_prompt_send_button is None:
         raise RuntimeError(f"Unable to find prompt button within provided starting element: {starting_element}")
+    # ax_set_attribute(atlas_prompt_send_button, "AXFocused", True)
+    # ax_set_attribute(atlas_prompt_send_button, "AXSelected", True)
     press_result: bool = ax_perform_action(atlas_prompt_send_button, "AXPress")
     logger.debug(f"Press result: {press_result}")
+    time.sleep(.05)
 
-
-def _get_atlas_main_or_window() -> AXUIElementRef:
-    """Returns the Atlas main or window element reference."""
-    atlas_root: AXUIElementRef = get_atlas_ui()
-    atlas_window: AXUIElementRef = get_atlas_window(atlas_root)
-    atlas_main: AXUIElementRef | None = get_atlas_main(atlas_window)
-    closest_element: AXUIElementRef = atlas_main if atlas_main is not None else atlas_window
-    return closest_element
 
 
 if __name__ == "__main__":
-    logger.info(is_prompt_loading())
+    load_state: bool = is_prompt_loading()
+    logger.info(load_state)
+    while True:
+        state: bool = is_prompt_loading()
+        if load_state != state:
+            load_state = state
+            logger.info(state)
+

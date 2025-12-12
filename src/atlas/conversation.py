@@ -9,7 +9,7 @@ from atlas.accessibility import AXUIElementRef
 from atlas.constants import DATA_FOLDER
 from atlas.demo import load_planned_conversation
 from atlas.interface import get_atlas_ui
-from atlas.interface import get_atlas_window
+from atlas.interface import _get_atlas_window
 from atlas.interface import open_new_atlas_tab
 from atlas.prompt import send_prompt
 
@@ -17,7 +17,7 @@ from atlas.prompt import send_prompt
 def play_conversation(planned_conversation: ItemCreateParams) -> None:
     """Starts a new conversation and plays through it in atlas."""
     atlas_root: AXUIElementRef = get_atlas_ui()
-    atlas_window: AXUIElementRef = get_atlas_window(atlas_root)
+    atlas_window: AXUIElementRef = _get_atlas_window(atlas_root)
     open_new_atlas_tab(atlas_window)
 
     for item in planned_conversation["items"]:

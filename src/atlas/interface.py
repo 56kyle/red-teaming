@@ -42,12 +42,18 @@ def create_accessibility_element_for_application(process_id: int) -> AXUIElement
     return AXUIElementCreateApplication(process_id)
 
 
-def get_atlas_window(app_element: AXUIElementRef) -> AXUIElementRef | None:
+def get_atlas_window() -> AXUIElementRef:
     """Returns the first valid atlas window reference.
 
     For Chromium-based apps, AXFocusedWindow/AXMainWindow are more reliable
     than AXWindows. Windows from AXWindows are validated to have attributes.
     """
+    atlas_root: AXUIElementRef = get_atlas_ui()
+    return _get_atlas_window(atlas_root)
+
+
+def _get_atlas_window(app_element: AXUIElementRef) -> AXUIElementRef:
+    """Returns the first valid atlas window reference."""
     # Try focused/main window first (more reliable for Chromium-based apps)
     for window_attr in ("AXFocusedWindow", "AXMainWindow"):
         window: Any | None = ax_get_attribute(app_element, window_attr)
@@ -66,7 +72,7 @@ def get_atlas_window(app_element: AXUIElementRef) -> AXUIElementRef | None:
         except TypeError:
             pass
 
-    return None
+    raise RuntimeError(f"Could not find window reference: {app_element}")
 
 
 def focus_atlas_window(element: AXUIElementRef) -> AXUIElementRef:
@@ -76,12 +82,18 @@ def focus_atlas_window(element: AXUIElementRef) -> AXUIElementRef:
 
 def open_new_atlas_tab(starting_element: AXUIElementRef, delay: float = DEFAULT_TAB_DELAY) -> AXUIElementRef:
     """Finds the Atlas tab button and presses it."""
-    new_tab_button: AXUIElementRef = get_atlas_new_tab_button(starting_element)
+    new_tab_button: AXUIElementRef = _get_atlas_new_tab_button(starting_element)
     ax_perform_action(new_tab_button, "AXPress")
     time.sleep(delay)
 
 
-def get_atlas_new_tab_button(starting_element: AXUIElementRef) -> AXUIElementRef:
+def get_atlas_new_tab_button() -> AXUIElementRef:
+    """Gets the Atlas new tab button starting from nothing."""
+    atlas_root: AXUIElementRef = get_atlas_ui()
+    return _get_atlas_new_tab_button(atlas_root)
+
+
+def _get_atlas_new_tab_button(starting_element: AXUIElementRef) -> AXUIElementRef:
     """Returns the Atlas new tab button."""
     return find_live_first(starting_element, _is_atlas_new_tab_button, maximum_depth=20)
 
@@ -93,7 +105,13 @@ def _is_atlas_new_tab_button(element: AXUIElementRef) -> bool:
     return str(role) == "AXButton" and str(description) == "New Tab"
 
 
-def get_atlas_main(window_element: AXUIElementRef) -> AXUIElementRef | None:
+def get_atlas_main() -> AXUIElementRef | None:
+    """Returns the Atlas main web page dom reference if present."""
+    atlas_window: AXUIElementRef = get_atlas_window()
+    return _get_atlas_main(atlas_window)
+
+
+def _get_atlas_main(window_element: AXUIElementRef) -> AXUIElementRef | None:
     """Returns the main atlas interface reference."""
     return find_live_first(window_element, _is_atlas_main, maximum_depth=20)
 
@@ -104,9 +122,25 @@ def _is_atlas_main(element: AXUIElementRef) -> bool:
     return subrole == "AXLandmarkMain"
 
 
-def get_atlas_web_areas(starting_element: AXUIElementRef, maximum_depth: int = 15) -> list[AXUIElementRef]:
-    """Returns a list of atlas web areas references."""
-    return find_live(starting_element, _is_atlas_web_area, maximum_depth=maximum_depth)
+def get_atlas_main_or_window() -> AXUIElementRef:
+    """Returns the Atlas main or window element reference."""
+    atlas_window: AXUIElementRef = get_atlas_window()
+    atlas_main: AXUIElementRef | None = _get_atlas_main(atlas_window)
+    closest_element: AXUIElementRef = atlas_main if atlas_main is not None else atlas_window
+    return closest_element
+
+
+def get_atlas_web_areas() -> AXUIElementRef | None:
+    """Returns a list of Atlas web area references."""
+    atlas_window: AXUIElementRef = get_atlas_window()
+    if atlas_window is None:
+        raise RuntimeError("No Atlas window found to search for web areas in.")
+    return _get_atlas_web_areas(atlas_window)
+
+
+def _get_atlas_web_areas(starting_element: AXUIElementRef) -> list[AXUIElementRef]:
+    """Returns a list of atlas web area references."""
+    return find_live(starting_element, _is_atlas_web_area, maximum_depth=20)
 
 
 def _is_atlas_web_area(element: AXUIElementRef) -> bool:
@@ -117,11 +151,17 @@ def _is_atlas_web_area(element: AXUIElementRef) -> bool:
 
 def toggle_atlas_sidebar(starting_element: AXUIElementRef) -> None:
     """Opens the Atlas sidebar provided."""
-    sidebar_button: AXUIElementRef = get_atlas_sidebar_button(starting_element)
+    sidebar_button: AXUIElementRef = _get_atlas_sidebar_button(starting_element)
     ax_perform_action(sidebar_button, "AXEnable")
 
 
-def get_atlas_sidebar_button(starting_element: AXUIElementRef) -> AXUIElementRef:
+def get_atlas_sidebar_button() -> AXUIElementRef | None:
+    """Returns the Atlas sidebar button."""
+    atlas_window: AXUIElementRef = get_atlas_window()
+    return _get_atlas_sidebar_button(atlas_window)
+
+
+def _get_atlas_sidebar_button(starting_element: AXUIElementRef) -> AXUIElementRef | None:
     """Returns the Atlas sidebar button."""
     return find_live_first(starting_element, _is_atlas_sidebar_button, maximum_depth=20)
 
@@ -137,7 +177,13 @@ def _is_atlas_sidebar_button(element: AXUIElementRef) -> bool:
     return str(role) == "AXButton" and phrase_met
 
 
-def get_atlas_sidebar(starting_element: AXUIElementRef) -> AXUIElementRef | None:
+def get_atlas_sidebar() -> AXUIElementRef | None:
+    """Returns the Atlas sidebar button."""
+    atlas_window: AXUIElementRef = get_atlas_window()
+    return _get_atlas_sidebar_button(atlas_window)
+
+
+def _get_atlas_sidebar(starting_element: AXUIElementRef) -> AXUIElementRef | None:
     """Returns the Atlas sidebar reference."""
     return find_live_first(starting_element, _is_atlas_sidebar)
 
@@ -149,15 +195,15 @@ def _is_atlas_sidebar(element: AXUIElementRef) -> bool:
     return str(title) == "Sidebar" and str(subrole) == "AXApplicationDialog"
 
 
-def get_sidebar_conversation_links(sidebar_element: AXUIElementRef) -> list[AXUIElementRef]:
+def _get_sidebar_conversation_links(sidebar_element: AXUIElementRef) -> list[AXUIElementRef]:
     """Returns a list of sidebar conversation link references."""
-    navigation_element: AXUIElementRef = get_sidebar_navigation(sidebar_element)
-    navigation_history_element: AXUIElementRef = get_sidebar_navigation_history(navigation_element)
-    history_link_elements: list[AXUIElementRef] = find_all_navigation_history_links(navigation_history_element)
+    navigation_element: AXUIElementRef = _get_sidebar_navigation(sidebar_element)
+    navigation_history_element: AXUIElementRef = _get_sidebar_navigation_history(navigation_element)
+    history_link_elements: list[AXUIElementRef] = _find_all_navigation_history_links(navigation_history_element)
     return [ax_get_attribute(element, "AXURL") for element in history_link_elements]
 
 
-def get_sidebar_navigation(sidebar_element: AXUIElementRef) -> AXUIElementRef | None:
+def _get_sidebar_navigation(sidebar_element: AXUIElementRef) -> AXUIElementRef | None:
     """Returns the Atlas sidebar navigation reference."""
     return find_live_first(sidebar_element, _is_sidebar_navigation)
 
@@ -169,7 +215,7 @@ def _is_sidebar_navigation(element: AXUIElementRef) -> bool:
     return subrole == "AXLandmarkNavigation" and description == "Chat history"
 
 
-def get_sidebar_navigation_history(sidebar_navigation_element: AXUIElementRef) -> list[AXUIElementRef]:
+def _get_sidebar_navigation_history(sidebar_navigation_element: AXUIElementRef) -> list[AXUIElementRef]:
     """Returns the Atlas sidebar navigation's history reference."""
     return find_live_first(sidebar_navigation_element, _is_sidebar_navigation)
 
@@ -180,7 +226,7 @@ def _is_sidebar_navigation_history(element: AXUIElementRef) -> bool:
     return dom_identifier == "history"
 
 
-def find_all_navigation_history_links(navigation_history_element: AXUIElementRef) -> list[AXUIElementRef]:
+def _find_all_navigation_history_links(navigation_history_element: AXUIElementRef) -> list[AXUIElementRef]:
     """Returns all Atlas sidebar history navigation link references."""
     return find_live(navigation_history_element, _is_navigation_history_link)
 
@@ -192,7 +238,13 @@ def _is_navigation_history_link(element: AXUIElementRef) -> bool:
     return role == "AXLink" and str(url).startswith("https://chatgpt.com/c/")
 
 
-def get_atlas_prompt_text_entry(starting_element: AXUIElementRef) -> AXUIElementRef | None:
+def get_atlas_prompt_text_entry() -> AXUIElementRef | None:
+    """Returns the Atlas prompt text entry reference."""
+    closest_element: AXUIElementRef = get_atlas_main_or_window
+    return _get_atlas_prompt_text_entry(closest_element)
+
+
+def _get_atlas_prompt_text_entry(starting_element: AXUIElementRef) -> AXUIElementRef | None:
     """Returns the Atlas prompt entry reference."""
     return find_live_first(starting_element, _is_atlas_prompt_text_entry, maximum_depth=25)
 
@@ -213,28 +265,34 @@ def _is_atlas_prompt_send_button(element: AXUIElementRef) -> bool:
     """Returns True if the element is the Atlas prompt send button reference."""
     dom_identifier: Any | None = ax_get_attribute(element, "AXDOMIdentifier")
     description: Any | None = ax_get_attribute(element, "AXDescription")
-    return str(dom_identifier) == "composer-submit-button" or str(description) == "Send"
+    return str(dom_identifier) == "composer-submit-button" or str(description) in ["Send", "Send prompt"]
 
 
-def get_atlas_prompt_stop_button(starting_element: AXUIElementRef) -> AXUIElementRef:
+def get_atlas_prompt_stop_button(starting_element: AXUIElementRef) -> AXUIElementRef | None:
     """Returns the Atlas prompt stop button reference."""
-    return find_live_first(starting_element, _is_atlas_prompt_stop_button)
+    return find_live_first(starting_element, _is_atlas_prompt_stop_button, maximum_depth=25)
 
 
 def _is_atlas_prompt_stop_button(element: AXUIElementRef) -> bool:
     """Returns True if the element is the Atlas prompt stop button reference."""
     description: Any | None = ax_get_attribute(element, "AXDescription")
     dom_identifier: AXUIElementRef | None = ax_get_attribute(element, "AXDOMIdentifier")
+    if str(dom_identifier) == "composer-submit-button" or str(description) == "Stop streaming":
+        logger.debug(f"{dom_identifier=}")
+        logger.debug(f"{description=}")
+
     return str(description) == "Stop streaming" and str(dom_identifier) == "composer-submit-button"
 
 
 if __name__ == "__main__":
-    atlas_root: AXUIElementRef = get_atlas_ui()
-    atlas_window: AXUIElementRef = get_atlas_window(atlas_root)
-    new_tab_button: AXUIElementRef = get_atlas_new_tab_button(atlas_window)
-    logger.info(new_tab_button)
-    logger.info(ax_get_action_names(new_tab_button))
-    ax_perform_action(new_tab_button, "AXPress")
+    while True:
+        atlas_root: AXUIElementRef = get_atlas_ui()
+        atlas_window: AXUIElementRef = _get_atlas_window(atlas_root)
+        logger.info(get_atlas_prompt_stop_button(atlas_window))
+    # new_tab_button: AXUIElementRef = get_atlas_new_tab_button(atlas_window)
+    # logger.info(new_tab_button)
+    # logger.info(ax_get_action_names(new_tab_button))
+    # ax_perform_action(new_tab_button, "AXPress")
 
     # sidebar: AXUIElementRef = get_atlas_sidebar(atlas_window)
     # links: list[str] = get_sidebar_conversation_links(sidebar)
