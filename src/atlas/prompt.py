@@ -7,8 +7,10 @@ from typing import Any
 from typing import Generator
 
 from loguru import logger
+from openai.types.conversations import ItemCreateParams
 
 from atlas.accessibility import AXUIElementRef
+from atlas.accessibility import ax_get_action_names
 from atlas.accessibility import ax_get_attribute
 from atlas.accessibility import ax_perform_action
 from atlas.accessibility import ax_set_attribute
@@ -16,13 +18,17 @@ from atlas.accessibility import find_live
 from atlas.accessibility import find_live_by_subrole
 from atlas.accessibility import find_live_first
 from atlas.accessibility.api import ax_get_children
+from atlas.hierarchy_broad import save_state
 from atlas.interface import _get_atlas_main
-from atlas.interface import get_atlas_main_or_window
-from atlas.interface import _get_atlas_prompt_send_button
+from atlas.interface import get_atlas_main
+from atlas.interface import get_atlas_prompt_send_button
 from atlas.interface import get_atlas_prompt_stop_button
-from atlas.interface import _get_atlas_prompt_text_entry
+from atlas.interface import get_atlas_prompt_text_entry
 from atlas.interface import get_atlas_ui
 from atlas.interface import _get_atlas_window
+from atlas.interface import get_atlas_window
+from atlas.interface import press_enter_in_atlas
+
 
 DEFAULT_PROMPT_CHECK_DELAY: float = 0.3
 DEFAULT_PROMPT_TIMEOUT: float = 60.0
@@ -46,8 +52,7 @@ def is_prompt_loading() -> AXUIElementRef:
 
 def is_ready_to_submit_text_entry() -> bool:
     """Returns whether Atlas is ready to submit the current text entry."""
-    closest_element: AXUIElementRef = get_atlas_main_or_window()
-    text_entry: AXUIElementRef | None = _get_atlas_prompt_text_entry(closest_element)
+    text_entry: AXUIElementRef | None = get_atlas_prompt_text_entry()
     if text_entry is None:
         return False
 
@@ -55,7 +60,7 @@ def is_ready_to_submit_text_entry() -> bool:
     if text_value is None:
         return False
 
-    submit_button: AXUIElementRef | None = _get_atlas_prompt_send_button(closest_element)
+    submit_button: AXUIElementRef | None = get_atlas_prompt_send_button()
     if submit_button is None:
         return False
 
@@ -64,12 +69,7 @@ def is_ready_to_submit_text_entry() -> bool:
 
 def is_ready_for_next_prompt() -> bool:
     """Returns whether the article is loading or not."""
-    atlas_root: AXUIElementRef = get_atlas_ui()
-    atlas_window: AXUIElementRef | None = _get_atlas_window(atlas_root)
-    if atlas_window is None:
-        raise ValueError("Failed to find atlas window")
-
-    atlas_main: AXUIElementRef | None = _get_atlas_main(atlas_window)
+    atlas_main: AXUIElementRef | None = get_atlas_main()
     if atlas_main is None:
         logger.debug(f"Failed to find atlas main window")
         return False
@@ -96,6 +96,14 @@ def _is_article(element: AXUIElementRef) -> bool:
     """Returns whether the provided element is an article."""
     role: Any | None = ax_get_attribute(element, "AXSubrole")
     return role == "AXDocumentArticle"
+
+
+def get_latest_article() -> AXUIElementRef | None:
+    """Returns the latest article in the live hierarchy."""
+    atlas_main: AXUIElementRef | None = get_atlas_main()
+    if atlas_main is None:
+        return None
+    return _get_latest_article(atlas_main)
 
 
 def _get_latest_article(starting_element: AXUIElementRef) -> AXUIElementRef | None:
@@ -136,30 +144,26 @@ def _iter_text(element: AXUIElementRef) -> Generator[str, None, None]:
         yield str(value)
 
 
-def send_prompt(value: str, timeout: float = DEFAULT_PROMPT_TIMEOUT) -> AXUIElementRef:
+def send_prompt(value: str, timeout: float = DEFAULT_PROMPT_TIMEOUT) -> str:
     """Sends the provided value as a prompt."""
     logger.debug("Sending prompt...")
     set_prompt_text(value)
-    logger.debug(f"Waiting for UI to be ready for set text to be submitted...")
-    while not is_ready_to_submit_text_entry():
-        pass
-    logger.debug(f"UI Ready for text to be submitted.")
-    press_send_prompt_button()
-    time.sleep(DEFAULT_PROMPT_CHECK_DELAY)
+    submit_entered_prompt()
     send_time: float = time.time()
     while not is_ready_for_next_prompt():
         if time.time() - send_time > timeout:
             raise TimeoutError(f"Timed out while waiting for prompt to load for {timeout} seconds.")
+    return get_prompt_response()
 
 
 def set_prompt_text(value: str) -> None:
     """Finds the Atlas text area and sets its value directly."""
     shortened_value = value[:80] if len(value) > 80 else value
     logger.debug(f"Attempting to set prompt text:\n {shortened_value}")
-    starting_element: AXUIElementRef = get_atlas_main_or_window()
-    atlas_prompt_text_entry: AXUIElementRef | None = _get_atlas_prompt_text_entry(starting_element)
+    atlas_prompt_text_entry: AXUIElementRef | None = get_atlas_prompt_text_entry()
     if atlas_prompt_text_entry is None:
-        raise RuntimeError(f"Unable to find prompt text area within provided starting element: {starting_element}")
+        raise RuntimeError(f"Unable to find prompt text area.")
+    logger.debug(ax_get_action_names(atlas_prompt_text_entry))
 
     focus_result: bool = ax_set_attribute(atlas_prompt_text_entry, "AXFocused", True)
     logger.debug(f"Focus result: {focus_result}")
@@ -169,18 +173,35 @@ def set_prompt_text(value: str) -> None:
     logger.debug("Done setting prompt text.")
 
 
+def submit_entered_prompt() -> None:
+    """Submits the entered value as a prompt in Atlas."""
+    text_entry: AXUIElementRef | None = get_atlas_prompt_text_entry()
+    if text_entry is None:
+        raise RuntimeError(f"Unable to find prompt text entry.")
+
+    ax_set_attribute(text_entry, "AXFocused", True)
+    press_enter_in_atlas()
+
+
+def get_prompt_response() -> str:
+    """Returns the text found within the Atlas prompt's response."""
+    response_article: AXUIElementRef | None = get_latest_article()
+    if response_article is None:
+        raise RuntimeError(f"Unable to find latest article.")
+    return get_text(response_article)
+
+
 def press_send_prompt_button() -> None:
     """Finds the prompt send button reference and presses it."""
-    starting_element: AXUIElementRef = get_atlas_main_or_window()
-    atlas_prompt_send_button: AXUIElementRef | None = _get_atlas_prompt_send_button(starting_element)
+    atlas_prompt_send_button: AXUIElementRef | None = get_atlas_prompt_send_button()
     if atlas_prompt_send_button is None:
-        raise RuntimeError(f"Unable to find prompt button within provided starting element: {starting_element}")
-    # ax_set_attribute(atlas_prompt_send_button, "AXFocused", True)
-    # ax_set_attribute(atlas_prompt_send_button, "AXSelected", True)
+        raise RuntimeError(f"Unable to find prompt button.")
+    ax_set_attribute(atlas_prompt_send_button, "AXFocused", True)
+    ax_set_attribute(atlas_prompt_send_button, "AXSelected", True)
+    logger.debug(ax_get_action_names(atlas_prompt_send_button))
     press_result: bool = ax_perform_action(atlas_prompt_send_button, "AXPress")
     logger.debug(f"Press result: {press_result}")
     time.sleep(.05)
-
 
 
 if __name__ == "__main__":
@@ -191,4 +212,3 @@ if __name__ == "__main__":
         if load_state != state:
             load_state = state
             logger.info(state)
-

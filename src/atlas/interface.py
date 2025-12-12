@@ -22,12 +22,18 @@ from atlas.app import get_or_create_atlas_application
 
 try:
     from ApplicationServices import AXUIElementCreateApplication
+    from Quartz import (
+        CGEventCreateKeyboardEvent,
+        CGEventPostToPid,
+        kCGHIDEventTap
+    )
 except ImportError as import_error:
     logger.error(f"Failed to import required macOS frameworks: {import_error}")
     raise
 
 
-DEFAULT_TAB_DELAY: float = 0.1
+
+DEFAULT_TAB_DELAY: float = 0.5
 
 
 def get_atlas_ui() -> AXUIElementRef:
@@ -240,7 +246,7 @@ def _is_navigation_history_link(element: AXUIElementRef) -> bool:
 
 def get_atlas_prompt_text_entry() -> AXUIElementRef | None:
     """Returns the Atlas prompt text entry reference."""
-    closest_element: AXUIElementRef = get_atlas_main_or_window
+    closest_element: AXUIElementRef = get_atlas_main_or_window()
     return _get_atlas_prompt_text_entry(closest_element)
 
 
@@ -259,6 +265,9 @@ def _is_atlas_prompt_text_entry(element: AXUIElementRef) -> bool:
 def get_atlas_prompt_send_button() -> AXUIElementRef | None:
     """Returns the Atlas prompt send button reference."""
     closest_element: AXUIElementRef = get_atlas_main_or_window()
+    atlas_thread_bottom: Any | None = get_atlas_thread_bottom()
+    if atlas_thread_bottom is not None:
+        closest_element = atlas_thread_bottom
     return _get_atlas_prompt_send_button(closest_element)
 
 
@@ -290,17 +299,43 @@ def _is_atlas_prompt_stop_button(element: AXUIElementRef) -> bool:
     return str(description) == "Stop streaming" and str(dom_identifier) == "composer-submit-button"
 
 
+def get_atlas_thread_bottom() -> AXUIElementRef | None:
+    """Gets the Atlas reference that contains the text entry and submit button during extended prompts."""
+
+    atlas_main: AXUIElementRef | None = get_atlas_main()
+    if atlas_main is None:
+        return None
+    return _get_atlas_thread_bottom(atlas_main)
+
+
+def _get_atlas_thread_bottom(main_element: AXUIElementRef) -> AXUIElementRef | None:
+    """Gets the Atlas reference that contains the text entry and submit button during extended prompts."""
+    return find_live_first(main_element, _is_atlas_thread_bottom, maximum_depth=20)
+
+
+def _is_atlas_thread_bottom(element: AXUIElementRef) -> bool:
+    """Returns whether the provided element is the Atlas thread-bottom reference."""
+    dom_identifier: Any = ax_get_attribute(element, "AXDOMIdentifier")
+    return str(dom_identifier) == "thread-bottom"
+
+
+def press_enter_in_atlas():
+    """Press enter in Atlas.
+
+    Overall avoid using this, only used for edge cases where AXPress / etc. won't work.
+    """
+    app_info: ApplicationInfo = get_or_create_atlas_application()
+
+    key_down: Any = CGEventCreateKeyboardEvent(None, 36, True)
+    key_up: Any = CGEventCreateKeyboardEvent(None, 36, False)
+
+    CGEventPostToPid(app_info["process_id"], key_down)
+    CGEventPostToPid(app_info["process_id"], key_up)
+
+
 if __name__ == "__main__":
     while True:
         atlas_root: AXUIElementRef = get_atlas_ui()
         atlas_window: AXUIElementRef = _get_atlas_window(atlas_root)
         logger.info(get_atlas_prompt_stop_button(atlas_window))
-    # new_tab_button: AXUIElementRef = get_atlas_new_tab_button(atlas_window)
-    # logger.info(new_tab_button)
-    # logger.info(ax_get_action_names(new_tab_button))
-    # ax_perform_action(new_tab_button, "AXPress")
-
-    # sidebar: AXUIElementRef = get_atlas_sidebar(atlas_window)
-    # links: list[str] = get_sidebar_conversation_links(sidebar)
-    # logger.info(links)
 

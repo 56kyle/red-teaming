@@ -2,6 +2,7 @@
 from pathlib import Path
 from typing import Iterable
 
+from loguru import logger
 from openai.types.conversations import ItemCreateParams
 from openai.types.responses import ResponseInputItemParam
 
@@ -24,7 +25,8 @@ def play_conversation(planned_conversation: ItemCreateParams) -> None:
         content: Iterable[ResponseInputItemParam] = item["content"]
         content_inputs: list[str] = [input_item["text"] for input_item in content]
         combined_input: str = "".join(content_inputs)
-        send_prompt(combined_input)
+        response: str = send_prompt(combined_input)
+        logger.debug(response)
 
 
 if __name__ == "__main__":
